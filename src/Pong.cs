@@ -51,6 +51,16 @@ namespace TelnetGames
         private GameState gameState = GameState.NotStarted;
         private List<PlayerClass> players = new List<PlayerClass>();
 
+        public override void Tick()
+        {
+            if (gameState == GameState.NotStarted)
+                return;
+            HandleInput();
+            ComputeLogic();
+            RenderFrame();
+            Flush();
+        }
+
         private PlayerClass FindPlayerEnum(PlayerEnum playerEnum)
         {
             foreach (PlayerClass player in players)
@@ -68,6 +78,9 @@ namespace TelnetGames
         {
             player.tcpClient.NoDelay = true;
             player.tcpClient.SendTimeout = 10;
+            player.vt.SetForegroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Blue });
+            player.vt.SetCursorVisiblity(false);
+            player.vt.Bell();
             players.Add(new PlayerClass(player));
             if (player.playerType == PlayerType.Player)
             {
@@ -75,46 +88,94 @@ namespace TelnetGames
                 {
                     players[players.Count - 1].playerEnum = PlayerEnum.Player1;
                     gameState = GameState.Training;
-                    players[players.Count - 1].vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Yellow });
-                    players[players.Count - 1].vt.SetForegroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Blue });
-                    players[players.Count - 1].vt.SetCursor(0, 23);
-                    players[players.Count - 1].vt.ClearLine();
-                    players[players.Count - 1].vt.SetCursor(1, 24);
-                    players[players.Count - 1].vt.WriteText("WAITING FOR PLAYER...");
+                    ResetPositions();
+                    UpdateInfo(players[players.Count - 1], "STEERING: A and Z keys.                                  WAITING FOR PLAYER...");
                 }
                 else if (FindPlayerEnum(PlayerEnum.Player2) == null)
                 {
                     players[players.Count - 1].playerEnum = PlayerEnum.Player2;
                     gameState = GameState.Normal;
                     ResetPositions();
+                    UpdateInfo(players[players.Count - 1], "STEERING: A and Z keys.");
                 }
             }
-            players[players.Count - 1].vt.Bell();
-            players[players.Count - 1].vt.SetCursorVisiblity(false);
-            players[players.Count - 1].vt.Flush();
+            player.vt.Flush();
         }
 
-        public override void Tick()
+        private void UpdateInfo(PlayerClass player, string info)
         {
-            if (gameState == GameState.NotStarted)
-                return;
-            HandleInput();
-            ComputeLogic();
-            RenderFrame();
+            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Yellow });
+            player.vt.SetCursor(1, 24);
+            player.vt.ClearLine();
+            player.vt.WriteText(info);
         }
 
-        private void Bell()
+        private void Flush()
         {
-            foreach (PlayerClass item in players)
-                item.vt.Bell();
+            foreach (PlayerClass player in players)
+                if (!Flush(player))
+                    break;
         }
 
-        private void ScorePoint(PlayerClass player)
+        private bool Flush(PlayerClass player)
         {
-            Bell();
+            try
+            {
+                player.vt.Flush();
+                return true;
+            }
+            catch (TimeoutException)
+            {
+                Console.WriteLine("Flush timeout, skipping frame!");
+                return false;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Flush exception!");
+                if (player.playerType == PlayerType.Player)
+                {
+                    KillGame();
+                    Console.WriteLine("...killing game!");
+                }
+                else
+                {
+                    try
+                    {
+                        player.vt.Close();
+                        player.tcpClient.Close();
+                    }
+                    catch { }
+                }
+                return false;
+            }
+        }
+
+        public override void KillGame()
+        {
+            while (players.Count != 0)
+            {
+                foreach (PlayerClass player in players)
+                {
+                    try
+                    {
+                        player.vt.ClearScreen();
+                        player.vt.SetCursor(0, 0);
+                        player.vt.WriteText("Partner disconnected.");
+                        player.vt.Close();
+                        player.tcpClient.Close();
+                        players.Remove(player);
+                        break;
+                    }
+                    catch (Exception)
+                    {
+                        Console.WriteLine("Problem during disconnecting client!");
+                        players.Remove(player);
+                        break;
+                    }
+                }
+            }
             ResetPositions();
-            if (gameState == GameState.Normal)
-                player.points++;
+            gameState = GameState.NotStarted;
         }
 
         private void ResetPositions()
@@ -130,11 +191,74 @@ namespace TelnetGames
             ballDirection = BallDirection.DownLeft;
         }
 
+        private void RenderFrame()
+        {
+            foreach (PlayerClass player in players)
+                RenderFrame(player);
+        }
+
+        private void RenderFrame(PlayerClass player)
+        {
+            PlayerClass player1 = FindPlayerEnum(PlayerEnum.Player1);
+            PlayerClass player2 = FindPlayerEnum(PlayerEnum.Player2);
+
+            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Blue });
+            player.vt.SetCursor(79, 22);
+            player.vt.ClearScreen(VT100.ClearMode.BeginningToCursor);
+
+            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Yellow });
+            player.vt.SetCursor(0, 0);
+            player.vt.ClearLine();
+
+            if (gameState == GameState.Normal)
+            {
+                player.vt.SetCursor(0, 23);
+                player.vt.ClearLine();
+            }
+
+            if (gameState == GameState.Training)
+                player.vt.DrawLine(79, 1, VT100.Direction.Vertical, 22);
+
+            if (gameState == GameState.Normal)
+            {
+                player.vt.SetCursor(36, 0);
+                player.vt.WriteText((player1.points < 10 ? " " + player1.points.ToString() : player1.points.ToString()) + " : " + player2.points.ToString());
+            }
+
+            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Green });
+            player.vt.DrawLine(0, FindPlayerEnum(PlayerEnum.Player1).paddle + 1, VT100.Direction.Vertical, 5);
+            if (gameState == GameState.Normal)
+                player.vt.DrawLine(79, FindPlayerEnum(PlayerEnum.Player2).paddle + 1, VT100.Direction.Vertical, 5);
+
+            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Yellow });
+            player.vt.DrawLine(ballX, ballY + 1, VT100.Direction.Horizontal, 2);
+        }
+
+        private void HandleInput()
+        {
+            foreach (PlayerClass player in players)
+                if (player.playerType != PlayerType.Spectator)
+                    HandleInput(player);
+        }
+
+        private void HandleInput(PlayerClass player)
+        {
+            char? temp;
+            while ((temp = player.vt.ReadChar()) != null)
+            {
+                if (temp == 'A' || temp == 'a')
+                    player.paddle--;
+                if (temp == 'Z' || temp == 'z')
+                    player.paddle++;
+            }
+        }
+
+
         private void ComputeLogic()
         {
             PlayerClass player1 = FindPlayerEnum(PlayerEnum.Player1);
             PlayerClass player2 = FindPlayerEnum(PlayerEnum.Player2);
-            
+
             if (player1.paddle < 0)
                 player1.paddle = 0;
             if (player1.paddle > 17)
@@ -256,112 +380,18 @@ namespace TelnetGames
             }
         }
 
-        private void RenderFrame()
+        private void Bell()
         {
-            try
-            {
-                foreach (PlayerClass player in players)
-                    RenderFrame(player);
-            }
-            catch (InvalidOperationException)
-            {
-                Console.WriteLine("Invalid operation exception in RenderFrame()!");
-            }
+            foreach (PlayerClass item in players)
+                item.vt.Bell();
         }
 
-        private void RenderFrame(PlayerClass player)
+        private void ScorePoint(PlayerClass player)
         {
-            PlayerClass player1 = FindPlayerEnum(PlayerEnum.Player1);
-            PlayerClass player2 = FindPlayerEnum(PlayerEnum.Player2);
-
-            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Blue });
-            if (gameState == GameState.Normal)
-                player.vt.ClearScreen();
-            else
-            {
-                player.vt.SetCursor(79, 22);
-                player.vt.ClearScreen(VT100.ClearMode.BeginningToCursor);
-            }
-            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Yellow });
-            player.vt.SetCursor(0, 0);
-            player.vt.ClearLine();
-            if (gameState == GameState.Normal)
-            {
-                player.vt.SetCursor(0, 23);
-                player.vt.ClearLine();
-            }
-            if (gameState == GameState.Training)
-                player.vt.DrawLine(79, 1, VT100.Direction.Vertical, 23);
-            player.vt.SetCursor(36, 0);
-            player.vt.SetForegroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Blue });
-            if (gameState == GameState.Normal)
-                player.vt.WriteText((player1.points < 10 ? " " + player1.points.ToString() : player1.points.ToString()) + " : " + player2.points.ToString());
-            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Green });
-            player.vt.DrawLine(0, FindPlayerEnum(PlayerEnum.Player1).paddle + 1, VT100.Direction.Vertical, 5);
-            if (gameState == GameState.Normal)
-                player.vt.DrawLine(79, FindPlayerEnum(PlayerEnum.Player2).paddle + 1, VT100.Direction.Vertical, 5);
-            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Yellow });
-            player.vt.DrawLine(ballX, ballY + 1, VT100.Direction.Horizontal, 2);
-            try
-            {
-                player.vt.Flush();
-            }
-            catch (TimeoutException)
-            {
-                Console.WriteLine("Flush timeout, skipping frame!");
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Flush exception, closing game!");
-                KillGame();
-            }
-        }
-
-        public override void KillGame()
-        {
-            while (players.Count != 0)
-            {
-                foreach (PlayerClass player in players)
-                {
-                    try
-                    {
-                        player.vt.ClearScreen();
-                        player.vt.SetCursor(0, 0);
-                        player.vt.WriteText("Partner disconnected.");
-                        player.vt.Close();
-                        player.tcpClient.Close();
-                        players.Remove(player);
-                        break;
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("Problem during farewelling client!");
-                        players.Remove(player);
-                        break;
-                    }
-                }
-            }
+            Bell();
             ResetPositions();
-            gameState = GameState.NotStarted;
-        }
-
-        private void HandleInput()
-        {
-            foreach (PlayerClass player in players)
-                if (player.playerType != PlayerType.Spectator)
-                    HandleInput(player);
-        }
-
-        private void HandleInput(PlayerClass player)
-        {
-            char? temp;
-            while ((temp = player.vt.ReadChar()) != null)
-            {
-                if (temp == 'A' || temp == 'a')
-                    player.paddle--;
-                if (temp == 'Z' || temp == 'z')
-                    player.paddle++;
-            }
+            if (gameState == GameState.Normal)
+                player.points++;
         }
     }
 }
