@@ -80,10 +80,16 @@ namespace TelnetGames
             {
                 for (int i = 1; i <= length; i++)
                 {
-                    stream.Write(new byte[1] { 32 }, 0, 1);
-                    SetCursor(x, y + i);
+                    stream.Write(new byte[2] { 32, 8 }, 0, 2);
+                    CursorDown();
                 }
             }
+        }
+
+        public void CursorDown()
+        {
+            byte[] buffer = new byte[3] { 27, 91, 66 };
+            stream.Write(buffer, 0, buffer.Length);
         }
 
         public void SetBackgroundColor(ColorStruct color)

@@ -302,9 +302,6 @@ namespace TelnetGames
                 player.vt.DrawLine(79, FindPlayerEnum(PlayerEnum.Player2).paddle + 1, VT100.Direction.Vertical, 5);
             player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Yellow });
             player.vt.DrawLine(ballX, ballY + 1, VT100.Direction.Horizontal, 2);
-            player.vt.SetCursor(0, 0);
-            player.vt.SetForegroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Yellow });
-            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Yellow });
             try
             {
                 player.vt.Flush();
