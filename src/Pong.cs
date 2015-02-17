@@ -47,16 +47,20 @@ namespace TelnetGames
 
         private int ballX = 39;
         private int ballY = 11;
-        private BallDirection ballDirection = BallDirection.DownLeft;
+        private BallDirection ballDirection = BallDirection.UpLeft;
         private GameState gameState = GameState.NotStarted;
         private List<PlayerClass> players = new List<PlayerClass>();
+        private int holdTicks;
 
         public override void Tick()
         {
             if (gameState == GameState.NotStarted)
                 return;
             HandleInput();
-            ComputeLogic();
+            if (holdTicks == 0)
+                ComputeLogic();
+            else
+                holdTicks--;
             RenderFrame();
             Flush();
         }
@@ -76,14 +80,14 @@ namespace TelnetGames
                     players[players.Count - 1].playerEnum = PlayerEnum.Player1;
                     gameState = GameState.Training;
                     ResetPositions();
-                    UpdateInfo(players[players.Count - 1], "STEERING: A and Z keys.                                  WAITING FOR PLAYER...");
+                    UpdateInfo(players[players.Count - 1], "CONTROLS: A and Z keys.                                  WAITING FOR PLAYER...");
                 }
                 else if (FindPlayerEnum(PlayerEnum.Player2) == null)
                 {
                     players[players.Count - 1].playerEnum = PlayerEnum.Player2;
                     gameState = GameState.Normal;
                     ResetPositions();
-                    UpdateInfo(players[players.Count - 1], "STEERING: A and Z keys.");
+                    UpdateInfo(players[players.Count - 1], "CONTROLS: A and Z keys.");
                 }
             }
             player.vt.Flush();
@@ -186,15 +190,29 @@ namespace TelnetGames
 
         private void ResetPositions()
         {
+            ResetPositions(PlayerEnum.None);
+        }
+
+        private void ResetPositions(PlayerEnum playerEnum)
+        {
             ballX = 39;
             ballY = 11;
+            holdTicks = 10;
             PlayerClass player1 = FindPlayerEnum(PlayerEnum.Player1);
             PlayerClass player2 = FindPlayerEnum(PlayerEnum.Player2);
+            ballDirection = BallDirection.UpLeft;
             if (player1 != null)
+            {
                 player1.paddle = 8;
+                if (player1.playerEnum == playerEnum)
+                    ballDirection = BallDirection.UpLeft;
+            }
             if (player2 != null)
+            {
                 player2.paddle = 8;
-            ballDirection = BallDirection.DownLeft;
+                if (player1.playerEnum == playerEnum)
+                    ballDirection = BallDirection.UpRight;
+            }
         }
 
         private void RenderFrame()
@@ -394,9 +412,13 @@ namespace TelnetGames
         private void ScorePoint(PlayerClass player)
         {
             Bell();
-            ResetPositions();
             if (gameState == GameState.Normal)
+            {
                 player.points++;
+                ResetPositions(player.playerEnum);
+            }
+            else
+                ResetPositions();
         }
     }
 }
