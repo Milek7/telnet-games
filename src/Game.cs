@@ -22,25 +22,18 @@ namespace TelnetGames
             Spectator
         }
 
-        public virtual void AddPlayer(PlayerClass player)
+        public event Action<Game> GameKilled;
+
+        protected void GameKilledRaise()
         {
-            throw new NotImplementedException();
+            if (GameKilled != null)
+                GameKilled(this);
         }
-        public virtual void RemovePlayer(PlayerClass player)
-        {
-            throw new NotImplementedException();
-        }
-        public virtual void Tick()
-        {
-            throw new NotImplementedException();
-        }
-        public virtual void KillGame()
-        {
-            throw new NotImplementedException();
-        }
-        public virtual int PlayersCount()
-        {
-            throw new NotImplementedException();
-        }
+
+        public abstract void Tick();
+        public abstract void AddPlayer(PlayerClass player);
+        public abstract void RemovePlayer(PlayerClass player);
+        public abstract void KillGame();
+        public abstract int PlayersCount();
     }
 }

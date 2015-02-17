@@ -15,6 +15,7 @@ namespace TelnetGames
     {
         static List<Game> games = new List<Game>();
         static Thread GameThread;
+        private static bool breakLoop = false;
 
         static void Main(string[] args)
         {
@@ -41,6 +42,7 @@ namespace TelnetGames
                     else
                     {
                         game = new Pong();
+                        game.GameKilled += OnGameKilled;
                         games.Add(game);
                     }
                     games[games.Count - 1].AddPlayer(new Game.PlayerClass() { playerType = Game.PlayerType.Player, tcpClient = tcpClient, vt = vt });
@@ -54,6 +56,12 @@ namespace TelnetGames
             }
         }
 
+        static void OnGameKilled(Game game)
+        {
+            games.Remove(game);
+            breakLoop = true;
+        }
+
         static void GameThreadMethod()
         {
             Stopwatch stopwatch = new Stopwatch();
@@ -65,12 +73,18 @@ namespace TelnetGames
                     try
                     {
                         game.Tick();
+                        
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e.Message);
                         Console.WriteLine("Game.Tick exception, killing game! (THIS SHOULD NOT HAPPEN!)");
                         games.Remove(game);
+                        break;
+                    }
+                    if (breakLoop)
+                    {
+                        breakLoop = true;
                         break;
                     }
                 }

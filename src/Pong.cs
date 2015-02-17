@@ -61,19 +61,6 @@ namespace TelnetGames
             Flush();
         }
 
-        private PlayerClass FindPlayerEnum(PlayerEnum playerEnum)
-        {
-            foreach (PlayerClass player in players)
-                if (player.playerEnum == playerEnum)
-                    return player;
-            return null;
-        }
-
-        public override int PlayersCount()
-        {
-            return players.Count;
-        }
-
         public override void AddPlayer(Game.PlayerClass player)
         {
             player.tcpClient.NoDelay = true;
@@ -100,6 +87,53 @@ namespace TelnetGames
                 }
             }
             player.vt.Flush();
+        }
+
+        public override void RemovePlayer(Game.PlayerClass player)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void KillGame()
+        {
+            while (players.Count != 0)
+            {
+                foreach (PlayerClass player in players)
+                {
+                    try
+                    {
+                        player.vt.ClearScreen();
+                        player.vt.SetCursor(0, 0);
+                        player.vt.WriteText("Partner disconnected.");
+                        player.vt.Close();
+                        player.tcpClient.Close();
+                        players.Remove(player);
+                        break;
+                    }
+                    catch (Exception)
+                    {
+                        Console.WriteLine("Problem during disconnecting client!");
+                        players.Remove(player);
+                        break;
+                    }
+                }
+            }
+            ResetPositions();
+            gameState = GameState.NotStarted;
+            GameKilledRaise();
+        }
+
+        public override int PlayersCount()
+        {
+            return players.Count;
+        }
+
+        private PlayerClass FindPlayerEnum(PlayerEnum playerEnum)
+        {
+            foreach (PlayerClass player in players)
+                if (player.playerEnum == playerEnum)
+                    return player;
+            return null;
         }
 
         private void UpdateInfo(PlayerClass player, string info)
@@ -148,34 +182,6 @@ namespace TelnetGames
                 }
                 return false;
             }
-        }
-
-        public override void KillGame()
-        {
-            while (players.Count != 0)
-            {
-                foreach (PlayerClass player in players)
-                {
-                    try
-                    {
-                        player.vt.ClearScreen();
-                        player.vt.SetCursor(0, 0);
-                        player.vt.WriteText("Partner disconnected.");
-                        player.vt.Close();
-                        player.tcpClient.Close();
-                        players.Remove(player);
-                        break;
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("Problem during disconnecting client!");
-                        players.Remove(player);
-                        break;
-                    }
-                }
-            }
-            ResetPositions();
-            gameState = GameState.NotStarted;
         }
 
         private void ResetPositions()
@@ -252,7 +258,6 @@ namespace TelnetGames
                     player.paddle++;
             }
         }
-
 
         private void ComputeLogic()
         {
