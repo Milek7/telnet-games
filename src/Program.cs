@@ -16,6 +16,7 @@ namespace TelnetGames
         static List<Game> games = new List<Game>();
         static Thread GameThread;
         private static bool breakLoop = false;
+        private static Object addingPlayer = new Object();
 
         static void Main(string[] args)
         {
@@ -36,16 +37,19 @@ namespace TelnetGames
                     vt.WriteText("Welcome on TelnetGames!");
                     vt.Flush();
                     Game game;
-                    if ((games.Count != 0) && (games[games.Count - 1].PlayersCount() == 1))
-                        game = games[games.Count - 1];
-                    else
+                    lock (addingPlayer)
                     {
-                        game = new Pong();
-                        game.GameKilled += OnGameKilled;
-                        games.Add(game);
+                        if ((games.Count != 0) && (games[games.Count - 1].PlayersCount() == 1))
+                            game = games[games.Count - 1];
+                        else
+                        {
+                            game = new Pong();
+                            game.GameKilled += OnGameKilled;
+                            games.Add(game);
+                        }
+                        games[games.Count - 1].AddPlayer(new Game.PlayerClass() { playerType = Game.PlayerType.Player, tcpClient = tcpClient, vt = vt });
+                        Console.WriteLine("Client connected.");
                     }
-                    games[games.Count - 1].AddPlayer(new Game.PlayerClass() { playerType = Game.PlayerType.Player, tcpClient = tcpClient, vt = vt });
-                    Console.WriteLine("Client connected.");
                 }
                 catch (Exception e)
                 {
@@ -67,24 +71,27 @@ namespace TelnetGames
             while (true)
             {
                 stopwatch.Restart();
-                foreach (Game game in games)
+                lock (addingPlayer)
                 {
-                    try
+                    foreach (Game game in games)
                     {
-                        game.Tick();
-                        
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
-                        Console.WriteLine("Game.Tick exception, killing game! (THIS SHOULD NOT HAPPEN!)");
-                        games.Remove(game);
-                        break;
-                    }
-                    if (breakLoop)
-                    {
-                        breakLoop = true;
-                        break;
+                        try
+                        {
+                            game.Tick();
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e.Message);
+                            Console.WriteLine(e.StackTrace);
+                            Console.WriteLine("Game.Tick exception, killing game! (THIS SHOULD NOT HAPPEN!)");
+                            games.Remove(game);
+                            break;
+                        }
+                        if (breakLoop)
+                        {
+                            breakLoop = true;
+                            break;
+                        }
                     }
                 }
                 stopwatch.Stop();

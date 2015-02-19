@@ -163,7 +163,7 @@ namespace TelnetGames
                 }
                 else
                 {
-                    Console.WriteLine("Flush exception!");
+                    Console.WriteLine("Flush exception! Code: " + e.ErrorCode);
                     if (player.playerType == PlayerType.Player)
                     {
                         KillGame();
@@ -228,12 +228,6 @@ namespace TelnetGames
             player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Yellow });
             player.vt.SetCursor(0, 0);
             player.vt.ClearLine();
-
-            if (gameState == GameState.Normal)
-            {
-                player.vt.SetCursor(0, 23);
-                player.vt.ClearLine();
-            }
 
             if (gameState == GameState.Training)
                 player.vt.DrawLine(79, 1, VT100.Direction.Vertical, 22);
