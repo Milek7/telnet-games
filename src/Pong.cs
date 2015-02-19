@@ -67,8 +67,6 @@ namespace TelnetGames
 
         public override void AddPlayer(Game.PlayerClass player)
         {
-            player.tcpClient.NoDelay = true;
-            player.tcpClient.SendTimeout = 10;
             player.vt.SetForegroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Blue });
             player.vt.SetCursorVisiblity(false);
             player.vt.Bell();
@@ -91,11 +89,6 @@ namespace TelnetGames
                 }
             }
             player.vt.Flush();
-        }
-
-        public override void RemovePlayer(Game.PlayerClass player)
-        {
-            throw new NotImplementedException();
         }
 
         public override void KillGame()
@@ -162,27 +155,29 @@ namespace TelnetGames
                 player.vt.Flush();
                 return true;
             }
-            catch (TimeoutException)
+            catch (SocketException e)
             {
-                Console.WriteLine("Flush timeout, skipping frame!");
-                return false;
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Flush exception!");
-                if (player.playerType == PlayerType.Player)
+                if (e.ErrorCode == 10060)
                 {
-                    KillGame();
-                    Console.WriteLine("...killing game!");
+                    Console.WriteLine("Flush timeout, skipping frame!");
                 }
                 else
                 {
-                    try
+                    Console.WriteLine("Flush exception!");
+                    if (player.playerType == PlayerType.Player)
                     {
-                        player.vt.Close();
-                        player.tcpClient.Close();
+                        KillGame();
+                        Console.WriteLine("...killing game!");
                     }
-                    catch { }
+                    else
+                    {
+                        try
+                        {
+                            player.vt.Close();
+                            player.tcpClient.Close();
+                        }
+                        catch { }
+                    }
                 }
                 return false;
             }

@@ -42,13 +42,15 @@ namespace TelnetGames
             BeginningToCursor
         }
 
-        private NetworkStream networkStream;
+        private Socket socket;
         private MemoryStream stream;
         private bool isEscapeCode = false;
 
-        public VT100(NetworkStream networkStream)
+        public VT100(Socket socket)
         {
-            this.networkStream = networkStream;
+            this.socket = socket;
+            socket.NoDelay = true;
+            socket.SendTimeout = 10;
             stream = new MemoryStream();
             stream.Write(new byte[6] { 0xFF, 0xFB, 0x01, 0xFF, 0xFB, 0x03 }, 0, 6);
             Flush();
@@ -64,7 +66,7 @@ namespace TelnetGames
             stream.Seek(0, SeekOrigin.Begin);
             byte[] buffer = new byte[stream.Length];
             stream.Read(buffer, 0, (int)stream.Length);
-            networkStream.Write(buffer, 0, buffer.Length);
+            socket.Send(buffer);
             stream.SetLength(0);
         }
 
@@ -165,15 +167,16 @@ namespace TelnetGames
         {
             while (true)
             {
-                if (!networkStream.DataAvailable)
+                if (socket.Available == 0)
                     return null;
-                int? temp = networkStream.ReadByte();
-                if (isEscapeCode && ((temp > 64 && temp < 91) || (temp > 96 && temp < 123)))
+                byte[] buffer = new byte[1];
+                socket.Receive(buffer);
+                if (isEscapeCode && ((buffer[0] > 64 && buffer[0] < 91) || (buffer[0] > 96 && buffer[0] < 123)))
                     isEscapeCode = false;
-                else if (temp == 27) 
+                else if (buffer[0] == 27) 
                     isEscapeCode = true;
                 else if (isEscapeCode == false)
-                    return (char?)temp;
+                    return (char?)buffer[0];
             }
         }
 

@@ -31,8 +31,7 @@ namespace TelnetGames
                 try
                 {
                     TcpClient tcpClient = listener.AcceptTcpClient();
-                    NetworkStream stream = tcpClient.GetStream();
-                    VT100 vt = new VT100(stream);
+                    VT100 vt = new VT100(tcpClient.Client);
                     vt.ClearScreen();
                     vt.WriteText("Welcome on TelnetGames!");
                     vt.Flush();

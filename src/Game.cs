@@ -23,6 +23,7 @@ namespace TelnetGames
         }
 
         public event Action<Game> GameKilled;
+        public event Action<Game, PlayerClass> PlayerLeft;
 
         protected void GameKilledRaise()
         {
@@ -30,9 +31,14 @@ namespace TelnetGames
                 GameKilled(this);
         }
 
+        protected void PlayerLeftRaise(PlayerClass player)
+        {
+            if (PlayerLeft != null)
+                PlayerLeft(this, player);
+        }
+
         public abstract void Tick();
         public abstract void AddPlayer(PlayerClass player);
-        public abstract void RemovePlayer(PlayerClass player);
         public abstract void KillGame();
         public abstract int PlayersCount();
     }
