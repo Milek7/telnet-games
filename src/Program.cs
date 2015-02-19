@@ -65,6 +65,30 @@ namespace TelnetGames
             breakLoop = true;
         }
 
+        static void OnPlayerLeft(Game.PlayerClass player, bool connectionKilled)
+        {
+            if (connectionKilled)
+            {
+                try
+                {
+                    player.vt.Close();
+                    player.tcpClient.Close();
+                }
+                catch { }
+            }
+            else
+            {
+                try
+                {
+                    player.vt.WriteText("Goodbye.");
+                    player.vt.Flush();
+                    player.vt.Close();
+                    player.tcpClient.Close();
+                }
+                catch { }
+            }
+        }
+
         static void GameThreadMethod()
         {
             Stopwatch stopwatch = new Stopwatch();

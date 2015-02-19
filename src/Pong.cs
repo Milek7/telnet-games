@@ -97,20 +97,19 @@ namespace TelnetGames
             {
                 foreach (PlayerClass player in players)
                 {
+                    players.Remove(player);
                     try
                     {
                         player.vt.ClearScreen();
                         player.vt.SetCursor(0, 0);
-                        player.vt.WriteText("Partner disconnected.");
-                        player.vt.Close();
-                        player.tcpClient.Close();
-                        players.Remove(player);
+                        player.vt.WriteText("Partner disconnected.\r\n");
+                        PlayerLeftRaise(player, false);
                         break;
                     }
-                    catch (Exception)
+                    catch (SocketException)
                     {
                         Console.WriteLine("Problem during disconnecting client!");
-                        players.Remove(player);
+                        PlayerLeftRaise(player, true);
                         break;
                     }
                 }
@@ -164,19 +163,12 @@ namespace TelnetGames
                 else
                 {
                     Console.WriteLine("Flush exception! Code: " + e.ErrorCode);
+                    players.Remove(player);
+                    PlayerLeftRaise(player, true);
                     if (player.playerType == PlayerType.Player)
                     {
-                        KillGame();
                         Console.WriteLine("...killing game!");
-                    }
-                    else
-                    {
-                        try
-                        {
-                            player.vt.Close();
-                            player.tcpClient.Close();
-                        }
-                        catch { }
+                        KillGame();
                     }
                 }
                 return false;
