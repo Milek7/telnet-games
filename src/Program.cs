@@ -45,6 +45,7 @@ namespace TelnetGames
                         {
                             game = new Pong();
                             game.GameKilled += OnGameKilled;
+                            game.PlayerLeft += OnPlayerLeft;
                             games.Add(game);
                         }
                         games[games.Count - 1].AddPlayer(new Game.PlayerClass() { playerType = Game.PlayerType.Player, tcpClient = tcpClient, vt = vt });
@@ -65,7 +66,7 @@ namespace TelnetGames
             breakLoop = true;
         }
 
-        static void OnPlayerLeft(Game.PlayerClass player, bool connectionKilled)
+        static void OnPlayerLeft(Game game, Game.PlayerClass player, bool connectionKilled)
         {
             if (connectionKilled)
             {
