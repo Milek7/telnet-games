@@ -37,7 +37,7 @@ namespace TelnetGames
 
         public enum ClearMode
         {
-            CursorToBeginning,
+            CursorToEnd,
             Entire,
             BeginningToCursor
         }

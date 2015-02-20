@@ -102,32 +102,34 @@ namespace TelnetGames
 
         public override void KillGame()
         {
-            while (players.Count != 0)
+            for (int i = players.Count - 1; i >= 0; i--)
             {
-                foreach (PlayerClass player in players)
-                {
-                    players.Remove(player);
-                    if (player.playerType == PlayerType.Player)
-                        playerCount--;
-                    try
-                    {
-                        player.vt.ClearScreen();
-                        player.vt.SetCursor(0, 0);
-                        player.vt.WriteText("Partner disconnected.\r\n");
-                        PlayerLeftRaise(player, false);
-                        break;
-                    }
-                    catch (SocketException)
-                    {
-                        Console.WriteLine("Problem during disconnecting client!");
-                        PlayerLeftRaise(player, true);
-                        break;
-                    }
-                }
+                RemovePlayer(players[i]);
             }
             ResetPositions();
             gameState = GameState.NotStarted;
             GameKilledRaise();
+        }
+
+        private void RemovePlayer(PlayerClass player)
+        {
+            players.Remove(player);
+            if (player.playerType == PlayerType.Player)
+                playerCount--;
+            try
+            {
+                player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Black });
+                player.vt.SetForegroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.White });
+                player.vt.SetCursor(0, 0);
+                player.vt.ClearScreen();
+                player.vt.Flush();
+                PlayerLeftRaise(player, false);
+            }
+            catch (SocketException)
+            {
+                Console.WriteLine("Problem during disconnecting client!");
+                PlayerLeftRaise(player, true);
+            }
         }
 
         private void UpdateInfo(PlayerClass player, string info)
@@ -138,22 +140,21 @@ namespace TelnetGames
             player.vt.WriteText(info);
         }
 
-        private bool Flush()
+        private void Flush()
         {
-            foreach (PlayerClass player in players)
-                if (!Flush(player))
-                {
-                    return false;
-                }
-            return true;
+            for (int i = players.Count - 1; i >= 0; i--)
+            {
+                Flush(players[i]);
+                if (gameState == GameState.NotStarted)
+                    break;
+            }
         }
 
-        private bool Flush(PlayerClass player)
+        private void Flush(PlayerClass player)
         {
             try
             {
                 player.vt.Flush();
-                return true;
             }
             catch (SocketException e)
             {
@@ -174,7 +175,6 @@ namespace TelnetGames
                         KillGame();
                     }
                 }
-                return false;
             }
         }
 
@@ -207,8 +207,8 @@ namespace TelnetGames
 
         private void RenderFrame()
         {
-            foreach (PlayerClass player in players)
-                RenderFrame(player);
+            for (int i = players.Count - 1; i >= 0; i--)
+                RenderFrame(players[i]);
         }
 
         private void RenderFrame(PlayerClass player)
@@ -244,9 +244,12 @@ namespace TelnetGames
 
         private void HandleInput()
         {
-            foreach (PlayerClass player in players)
-                if (player.playerType != PlayerType.Spectator)
-                    HandleInput(player);
+            for (int i = players.Count - 1; i >= 0; i--)
+            {
+                HandleInput(players[i]);
+                if (gameState == GameState.NotStarted)
+                    break;
+            }
         }
 
         private void HandleInput(PlayerClass player)
@@ -254,10 +257,23 @@ namespace TelnetGames
             char? temp;
             while ((temp = player.vt.ReadChar()) != null)
             {
-                if (temp == 'A' || temp == 'a')
-                    player.paddle--;
-                if (temp == 'Z' || temp == 'z')
-                    player.paddle++;
+                if (player.playerType == PlayerType.Player)
+                {
+                    if (temp == 'A' || temp == 'a')
+                        player.paddle--;
+                    if (temp == 'Z' || temp == 'z')
+                        player.paddle++;
+                    if (temp == 'E' || temp == 'e')
+                    {
+                        KillGame();
+                        break;
+                    }
+                }
+                else if (temp == 'E' || temp == 'e')
+                {
+                    RemovePlayer(player);
+                    break;
+                }
             }
         }
 
@@ -389,8 +405,8 @@ namespace TelnetGames
 
         private void Bell()
         {
-            foreach (PlayerClass item in players)
-                item.vt.Bell();
+            for (int i = players.Count - 1; i >= 0; i--)
+                players[i].vt.Bell();
         }
 
         private void ScorePoint(PlayerClass player)

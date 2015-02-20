@@ -51,28 +51,21 @@ namespace TelnetGames
             while (true)
             {
                 stopwatch.Restart();
-                try
+                for (int i = games.Count - 1; i >= 0; i--)
                 {
-                    foreach (Game game in games)
+                    Game game = games[i];
+                    try
                     {
-                        try
-                        {
-                            if (game.minPlayers <= game.PlayerCount)
-                                game.Tick();
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine(e.Message);
-                            Console.WriteLine(e.StackTrace);
-                            Console.WriteLine("Game.Tick exception, killing game! (THIS SHOULD NOT HAPPEN!)");
-                            OnGameKilled(game);
-                        }
+                        if (game.minPlayers <= game.PlayerCount)
+                            game.Tick();
                     }
-                }
-                catch (InvalidOperationException e)
-                {
-                    if (e.HResult != -2146233079)
-                        throw;
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                        Console.WriteLine(e.StackTrace);
+                        Console.WriteLine("Game.Tick exception, killing game! (THIS SHOULD NOT HAPPEN!)");
+                        OnGameKilled(game);
+                    }
                 }
                 stopwatch.Stop();
                 int sleep = 50 - (int)stopwatch.ElapsedMilliseconds;
