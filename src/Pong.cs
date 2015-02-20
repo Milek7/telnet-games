@@ -239,7 +239,6 @@ namespace TelnetGames
             player.vt.SetBackgroundColor(colorPalette.Background);
             player.vt.SetCursor(79, 22);
             player.vt.ClearScreen(VT100.ClearMode.BeginningToCursor);
-            player.vt.WriteText(" ");
 
             player.vt.SetBackgroundColor(colorPalette.Band);
             player.vt.SetCursor(0, 0);
