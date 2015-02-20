@@ -44,16 +44,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\src\Game.cs">
+    <Compile Include="..\src\Game.cs">
       <Link>Game.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Pong.cs">
+    <Compile Include="..\src\Pong.cs">
       <Link>Pong.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Program.cs">
+    <Compile Include="..\src\Program.cs">
       <Link>Program.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\VT100.cs">
+    <Compile Include="..\src\VT100.cs">
       <Link>VT100.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
