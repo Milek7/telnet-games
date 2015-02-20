@@ -29,7 +29,7 @@ namespace TelnetGames
             Vertical
         }
 
-        public struct ColorStruct
+        public class ColorClass
         {
             public bool Bright;
             public ColorEnum Color;
@@ -94,7 +94,7 @@ namespace TelnetGames
             stream.Write(buffer, 0, buffer.Length);
         }
 
-        public void SetBackgroundColor(ColorStruct color)
+        public void SetBackgroundColor(ColorClass color)
         {
             byte[] buffer;
             if (color.Bright)
@@ -104,7 +104,7 @@ namespace TelnetGames
             stream.Write(buffer, 0, buffer.Length);
         }
 
-        public void SetForegroundColor(ColorStruct color)
+        public void SetForegroundColor(ColorClass color)
         {
             byte[] buffer;
             buffer = new byte[5] { 27, 91, 51, (byte)(48 + color.Color), 109 };

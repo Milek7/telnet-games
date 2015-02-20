@@ -31,6 +31,39 @@ namespace TelnetGames
             Normal
         }
 
+        private class ColorPalette
+        {
+            public VT100.ColorClass Background;
+            public VT100.ColorClass Band;
+            public VT100.ColorClass Paddle;
+            public VT100.ColorClass Ball;
+            public VT100.ColorClass Text;
+        }
+
+        private class StandardColorPalette : ColorPalette
+        {
+            public StandardColorPalette()
+            {
+                Background = new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Blue };
+                Band = new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Yellow };
+                Paddle = new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Green };
+                Ball = new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Yellow };
+                Text = new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Blue };
+            }
+        }
+
+        private class CompatibilityColorPalette : ColorPalette
+        {
+            public CompatibilityColorPalette()
+            {
+                Background = new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black };
+                Band = new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Yellow };
+                Paddle = new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Green };
+                Ball = new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White };
+                Text = new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black };
+            }
+        }
+
         private new class PlayerClass : Game.PlayerClass
         {
             public PlayerEnum playerEnum = PlayerEnum.None;
@@ -52,6 +85,7 @@ namespace TelnetGames
         private List<PlayerClass> players = new List<PlayerClass>();
         private int holdTicks;
         private int playerCount;
+        private ColorPalette colorPalette = new CompatibilityColorPalette();
 
         public override int minPlayers { get { return 1; } }
         public override int maxPlayers { get { return 2; } }
@@ -75,7 +109,7 @@ namespace TelnetGames
 
         public override void AddPlayer(Game.PlayerClass player)
         {
-            player.vt.SetForegroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Blue });
+            player.vt.SetForegroundColor(colorPalette.Text);
             player.vt.SetCursorVisiblity(false);
             player.vt.Bell();
             players.Add(new PlayerClass(player));
@@ -114,7 +148,7 @@ namespace TelnetGames
 
         private void UpdateInfo(PlayerClass player, string info)
         {
-            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Yellow });
+            player.vt.SetBackgroundColor(colorPalette.Band);
             player.vt.SetCursor(1, 24);
             player.vt.ClearLine();
             player.vt.WriteText(info);
@@ -196,11 +230,11 @@ namespace TelnetGames
             PlayerClass player1 = FindPlayerEnum(PlayerEnum.Player1);
             PlayerClass player2 = FindPlayerEnum(PlayerEnum.Player2);
 
-            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Blue });
+            player.vt.SetBackgroundColor(colorPalette.Background);
             player.vt.SetCursor(79, 22);
             player.vt.ClearScreen(VT100.ClearMode.BeginningToCursor);
 
-            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Yellow });
+            player.vt.SetBackgroundColor(colorPalette.Band);
             player.vt.SetCursor(0, 0);
             player.vt.ClearLine();
 
@@ -213,12 +247,12 @@ namespace TelnetGames
                 player.vt.WriteText((player1.points < 10 ? " " + player1.points.ToString() : player1.points.ToString()) + " : " + player2.points.ToString());
             }
 
-            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Green });
+            player.vt.SetBackgroundColor(colorPalette.Paddle);
             player.vt.DrawLine(0, FindPlayerEnum(PlayerEnum.Player1).paddle + 1, VT100.Direction.Vertical, 5);
             if (gameState == GameState.Normal)
                 player.vt.DrawLine(79, FindPlayerEnum(PlayerEnum.Player2).paddle + 1, VT100.Direction.Vertical, 5);
 
-            player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = true, Color = VT100.ColorEnum.Yellow });
+            player.vt.SetBackgroundColor(colorPalette.Ball);
             player.vt.DrawLine(ballX, ballY + 1, VT100.Direction.Horizontal, 2);
         }
 
@@ -414,8 +448,8 @@ namespace TelnetGames
                 playerCount--;
             try
             {
-                player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Black });
-                player.vt.SetForegroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.White });
+                player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
+                player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
                 player.vt.SetCursor(0, 0);
                 player.vt.ClearScreen();
                 player.vt.Flush();
