@@ -15,8 +15,6 @@ namespace TelnetGames
     {
         static List<Game> games = new List<Game>();
         static Thread GameThread;
-        private static bool breakLoop = false;
-        private static Object addingPlayer = new Object();
 
         static void Main(string[] args)
         {
@@ -36,21 +34,8 @@ namespace TelnetGames
                     vt.ClearScreen();
                     vt.WriteText("Welcome on TelnetGames!");
                     vt.Flush();
-                    Game game;
-                    lock (addingPlayer)
-                    {
-                        if ((games.Count != 0) && (games[games.Count - 1].PlayersCount() == 1))
-                            game = games[games.Count - 1];
-                        else
-                        {
-                            game = new Pong();
-                            game.GameKilled += OnGameKilled;
-                            game.PlayerLeft += OnPlayerLeft;
-                            games.Add(game);
-                        }
-                        games[games.Count - 1].AddPlayer(new Game.PlayerClass() { playerType = Game.PlayerType.Player, tcpClient = tcpClient, vt = vt });
-                        Console.WriteLine("Client connected.");
-                    }
+                    Game.PlayerClass player = new Game.PlayerClass() { playerType = Game.PlayerType.Player, tcpClient = tcpClient, vt = vt };
+                    HandlePlayer(typeof(Pong), player);
                 }
                 catch (Exception e)
                 {
@@ -60,10 +45,64 @@ namespace TelnetGames
             }
         }
 
-        static void OnGameKilled(Game game)
+        static void GameThreadMethod()
         {
-            games.Remove(game);
-            breakLoop = true;
+            Stopwatch stopwatch = new Stopwatch();
+            while (true)
+            {
+                stopwatch.Restart();
+                try
+                {
+                    foreach (Game game in games)
+                    {
+                        try
+                        {
+                            if (game.minPlayers <= game.PlayerCount)
+                                game.Tick();
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e.Message);
+                            Console.WriteLine(e.StackTrace);
+                            Console.WriteLine("Game.Tick exception, killing game! (THIS SHOULD NOT HAPPEN!)");
+                            OnGameKilled(game);
+                        }
+                    }
+                }
+                catch (InvalidOperationException e)
+                {
+                    if (e.HResult != -2146233079)
+                        throw;
+                }
+                stopwatch.Stop();
+                int sleep = 50 - (int)stopwatch.ElapsedMilliseconds;
+                if (sleep > 0)
+                    Thread.Sleep(sleep);
+            }
+        }
+
+        static void HandlePlayer(Type type, Game.PlayerClass player)
+        {
+            Game game = null;
+            foreach (Game item in games)
+            {
+                if (item.GetType() == type)
+                {
+                    if (item.PlayerCount < item.maxPlayers || player.playerType == Game.PlayerType.Spectator)
+                    {
+                        game = item;
+                        break;
+                    }
+                }
+            }
+            if (game == null)
+            {
+                game = (Game)Activator.CreateInstance(type);
+                game.GameKilled += OnGameKilled;
+                game.PlayerLeft += OnPlayerLeft;
+                games.Add(game);
+            }
+            game.AddPlayer(player);
         }
 
         static void OnPlayerLeft(Game game, Game.PlayerClass player, bool connectionKilled)
@@ -90,40 +129,11 @@ namespace TelnetGames
             }
         }
 
-        static void GameThreadMethod()
+        static void OnGameKilled(Game game)
         {
-            Stopwatch stopwatch = new Stopwatch();
-            while (true)
-            {
-                stopwatch.Restart();
-                lock (addingPlayer)
-                {
-                    foreach (Game game in games)
-                    {
-                        try
-                        {
-                            game.Tick();
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine(e.Message);
-                            Console.WriteLine(e.StackTrace);
-                            Console.WriteLine("Game.Tick exception, killing game! (THIS SHOULD NOT HAPPEN!)");
-                            games.Remove(game);
-                            break;
-                        }
-                        if (breakLoop)
-                        {
-                            breakLoop = true;
-                            break;
-                        }
-                    }
-                }
-                stopwatch.Stop();
-                int sleep = 50 - (int)stopwatch.ElapsedMilliseconds;
-                if (sleep > 0)
-                    Thread.Sleep(sleep);
-            }
+            game.GameKilled -= OnGameKilled;
+            game.PlayerLeft -= OnPlayerLeft;
+            games.Remove(game);
         }
     }
 }

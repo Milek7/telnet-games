@@ -25,6 +25,16 @@ namespace TelnetGames
         public event Action<Game> GameKilled;
         public event Action<Game, PlayerClass, bool> PlayerLeft;
 
+        public abstract int minPlayers { get; }
+        public abstract int maxPlayers { get; }
+        public abstract string Name { get; }
+        public abstract string Description { get; }
+        public abstract int PlayerCount { get; }
+
+        public abstract void Tick();
+        public abstract void AddPlayer(PlayerClass player);
+        public abstract void KillGame();
+
         protected void GameKilledRaise()
         {
             if (GameKilled != null)
@@ -36,10 +46,5 @@ namespace TelnetGames
             if (PlayerLeft != null)
                 PlayerLeft(this, player, connectionKilled);
         }
-
-        public abstract void Tick();
-        public abstract void AddPlayer(PlayerClass player);
-        public abstract void KillGame();
-        public abstract int PlayersCount();
     }
 }

@@ -51,6 +51,13 @@ namespace TelnetGames
         private GameState gameState = GameState.NotStarted;
         private List<PlayerClass> players = new List<PlayerClass>();
         private int holdTicks;
+        private int playerCount;
+
+        public override int minPlayers { get { return 1; } }
+        public override int maxPlayers { get { return 2; } }
+        public override string Name { get { return "Pong (multiplayer)"; } }
+        public override string Description { get { return ""; } }
+        public override int PlayerCount { get { return playerCount; } }
 
         public override void Tick()
         {
@@ -71,6 +78,8 @@ namespace TelnetGames
             player.vt.SetCursorVisiblity(false);
             player.vt.Bell();
             players.Add(new PlayerClass(player));
+            if (player.playerType == PlayerType.Player)
+                playerCount++;
             if (player.playerType == PlayerType.Player)
             {
                 if (FindPlayerEnum(PlayerEnum.Player1) == null)
@@ -98,6 +107,8 @@ namespace TelnetGames
                 foreach (PlayerClass player in players)
                 {
                     players.Remove(player);
+                    if (player.playerType == PlayerType.Player)
+                        playerCount--;
                     try
                     {
                         player.vt.ClearScreen();
@@ -119,19 +130,6 @@ namespace TelnetGames
             GameKilledRaise();
         }
 
-        public override int PlayersCount()
-        {
-            return players.Count;
-        }
-
-        private PlayerClass FindPlayerEnum(PlayerEnum playerEnum)
-        {
-            foreach (PlayerClass player in players)
-                if (player.playerEnum == playerEnum)
-                    return player;
-            return null;
-        }
-
         private void UpdateInfo(PlayerClass player, string info)
         {
             player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Yellow });
@@ -140,11 +138,14 @@ namespace TelnetGames
             player.vt.WriteText(info);
         }
 
-        private void Flush()
+        private bool Flush()
         {
             foreach (PlayerClass player in players)
                 if (!Flush(player))
-                    break;
+                {
+                    return false;
+                }
+            return true;
         }
 
         private bool Flush(PlayerClass player)
@@ -164,6 +165,8 @@ namespace TelnetGames
                 {
                     Console.WriteLine("Flush exception! Code: " + e.ErrorCode);
                     players.Remove(player);
+                    if (player.playerType == PlayerType.Player)
+                        playerCount--;
                     PlayerLeftRaise(player, true);
                     if (player.playerType == PlayerType.Player)
                     {
@@ -400,6 +403,14 @@ namespace TelnetGames
             }
             else
                 ResetPositions();
+        }
+
+        private PlayerClass FindPlayerEnum(PlayerEnum playerEnum)
+        {
+            foreach (PlayerClass player in players)
+                if (player.playerEnum == playerEnum)
+                    return player;
+            return null;
         }
     }
 }
