@@ -113,7 +113,7 @@ namespace TelnetGames
             {
                 try
                 {
-                    player.vt.WriteText("Goodbye.");
+                    player.vt.WriteText("Goodbye.\r\n");
                     player.vt.Flush();
                     player.vt.Close();
                     player.tcpClient.Close();

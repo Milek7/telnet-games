@@ -146,6 +146,12 @@ namespace TelnetGames
             GameKilledRaise();
         }
 
+        private void UpdateInfo(string info)
+        {
+            for (int i = players.Count - 1; i >= 0; i--)
+                UpdateInfo(players[i], info);
+        }
+
         private void UpdateInfo(PlayerClass player, string info)
         {
             player.vt.SetBackgroundColor(colorPalette.Band);
@@ -233,6 +239,7 @@ namespace TelnetGames
             player.vt.SetBackgroundColor(colorPalette.Background);
             player.vt.SetCursor(79, 22);
             player.vt.ClearScreen(VT100.ClearMode.BeginningToCursor);
+            player.vt.WriteText(" ");
 
             player.vt.SetBackgroundColor(colorPalette.Band);
             player.vt.SetCursor(0, 0);
@@ -451,6 +458,7 @@ namespace TelnetGames
                 player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
                 player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
                 player.vt.SetCursor(0, 0);
+                player.vt.SetCursorVisiblity(true);
                 player.vt.ClearScreen();
                 player.vt.Flush();
                 PlayerLeftRaise(player, false);
