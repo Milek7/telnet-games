@@ -64,6 +64,7 @@ namespace TelnetGames
             if (gameState == GameState.NotStarted)
                 return;
             HandleInput();
+            VerifyPositions();
             if (holdTicks == 0)
                 ComputeLogic();
             else
@@ -109,27 +110,6 @@ namespace TelnetGames
             ResetPositions();
             gameState = GameState.NotStarted;
             GameKilledRaise();
-        }
-
-        private void RemovePlayer(PlayerClass player)
-        {
-            players.Remove(player);
-            if (player.playerType == PlayerType.Player)
-                playerCount--;
-            try
-            {
-                player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Black });
-                player.vt.SetForegroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.White });
-                player.vt.SetCursor(0, 0);
-                player.vt.ClearScreen();
-                player.vt.Flush();
-                PlayerLeftRaise(player, false);
-            }
-            catch (SocketException)
-            {
-                Console.WriteLine("Problem during disconnecting client!");
-                PlayerLeftRaise(player, true);
-            }
         }
 
         private void UpdateInfo(PlayerClass player, string info)
@@ -282,18 +262,6 @@ namespace TelnetGames
             PlayerClass player1 = FindPlayerEnum(PlayerEnum.Player1);
             PlayerClass player2 = FindPlayerEnum(PlayerEnum.Player2);
 
-            if (player1.paddle < 0)
-                player1.paddle = 0;
-            if (player1.paddle > 17)
-                player1.paddle = 17;
-            if (gameState == GameState.Normal)
-            {
-                if (player2.paddle < 0)
-                    player2.paddle = 0;
-                if (player2.paddle > 17)
-                    player2.paddle = 17;
-            }
-
             switch (ballDirection)
             {
                 case BallDirection.UpRight:
@@ -403,6 +371,24 @@ namespace TelnetGames
             }
         }
 
+        private void VerifyPositions()
+        {
+            PlayerClass player1 = FindPlayerEnum(PlayerEnum.Player1);
+            PlayerClass player2 = FindPlayerEnum(PlayerEnum.Player2);
+
+            if (player1.paddle < 0)
+                player1.paddle = 0;
+            if (player1.paddle > 17)
+                player1.paddle = 17;
+            if (gameState == GameState.Normal)
+            {
+                if (player2.paddle < 0)
+                    player2.paddle = 0;
+                if (player2.paddle > 17)
+                    player2.paddle = 17;
+            }
+        }
+
         private void Bell()
         {
             for (int i = players.Count - 1; i >= 0; i--)
@@ -419,6 +405,27 @@ namespace TelnetGames
             }
             else
                 ResetPositions();
+        }
+
+        private void RemovePlayer(PlayerClass player)
+        {
+            players.Remove(player);
+            if (player.playerType == PlayerType.Player)
+                playerCount--;
+            try
+            {
+                player.vt.SetBackgroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.Black });
+                player.vt.SetForegroundColor(new VT100.ColorStruct { Bright = false, Color = VT100.ColorEnum.White });
+                player.vt.SetCursor(0, 0);
+                player.vt.ClearScreen();
+                player.vt.Flush();
+                PlayerLeftRaise(player, false);
+            }
+            catch (SocketException)
+            {
+                Console.WriteLine("Problem during disconnecting client!");
+                PlayerLeftRaise(player, true);
+            }
         }
 
         private PlayerClass FindPlayerEnum(PlayerEnum playerEnum)
