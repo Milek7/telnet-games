@@ -32,10 +32,11 @@ namespace TelnetGames
                     TcpClient tcpClient = listener.AcceptTcpClient();
                     VT100 vt = new VT100(tcpClient.Client);
                     vt.ClearScreen();
-                    vt.WriteText("Welcome on TelnetGames!");
+                    vt.WriteText("Welcome on TelnetGames!\r\n");
                     vt.Flush();
                     Game.PlayerClass player = new Game.PlayerClass() { playerType = Game.PlayerType.Player, tcpClient = tcpClient, vt = vt };
                     HandlePlayer(typeof(Pong), player);
+                    Console.WriteLine("Client connected.");
                 }
                 catch (Exception e)
                 {
@@ -94,6 +95,7 @@ namespace TelnetGames
                 game.GameKilled += OnGameKilled;
                 game.PlayerLeft += OnPlayerLeft;
                 games.Add(game);
+                Console.WriteLine("Game created.");
             }
             game.AddPlayer(player);
         }
@@ -102,6 +104,7 @@ namespace TelnetGames
         {
             if (connectionKilled)
             {
+                Console.WriteLine("Client disconnected. (connection killed)");
                 try
                 {
                     player.vt.Close();
@@ -113,6 +116,7 @@ namespace TelnetGames
             {
                 try
                 {
+                    Console.WriteLine("Client disconnected. (leaved)");
                     player.vt.WriteText("Goodbye.\r\n");
                     player.vt.Flush();
                     player.vt.Close();

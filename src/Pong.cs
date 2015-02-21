@@ -98,6 +98,8 @@ namespace TelnetGames
             if (gameState == GameState.NotStarted)
                 return;
             HandleInput();
+            if (gameState == GameState.NotStarted)
+                return;
             VerifyPositions();
             if (holdTicks == 0)
                 ComputeLogic();
@@ -122,14 +124,14 @@ namespace TelnetGames
                     players[players.Count - 1].playerEnum = PlayerEnum.Player1;
                     gameState = GameState.Training;
                     ResetPositions();
-                    UpdateInfo(players[players.Count - 1], "CONTROLS: A and Z keys.                                  WAITING FOR PLAYER...");
+                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys.                                  WAITING FOR PLAYER...");
                 }
                 else if (FindPlayerEnum(PlayerEnum.Player2) == null)
                 {
                     players[players.Count - 1].playerEnum = PlayerEnum.Player2;
                     gameState = GameState.Normal;
                     ResetPositions();
-                    UpdateInfo(players[players.Count - 1], "CONTROLS: A and Z keys.");
+                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys.");
                 }
             }
             player.vt.Flush();
@@ -137,6 +139,7 @@ namespace TelnetGames
 
         public override void KillGame()
         {
+            Console.WriteLine("Killing game!");
             for (int i = players.Count - 1; i >= 0; i--)
             {
                 RemovePlayer(players[i]);
@@ -146,10 +149,11 @@ namespace TelnetGames
             GameKilledRaise();
         }
 
-        private void UpdateInfo(string info)
+        private void UpdateInfo(PlayerType type, string info)
         {
             for (int i = players.Count - 1; i >= 0; i--)
-                UpdateInfo(players[i], info);
+                if (players[i].playerType == type)
+                    UpdateInfo(players[i], info);
         }
 
         private void UpdateInfo(PlayerClass player, string info)
@@ -190,10 +194,7 @@ namespace TelnetGames
                         playerCount--;
                     PlayerLeftRaise(player, true);
                     if (player.playerType == PlayerType.Player)
-                    {
-                        Console.WriteLine("...killing game!");
                         KillGame();
-                    }
                 }
             }
         }
@@ -464,7 +465,6 @@ namespace TelnetGames
             }
             catch (SocketException)
             {
-                Console.WriteLine("Problem during disconnecting client!");
                 PlayerLeftRaise(player, true);
             }
         }
