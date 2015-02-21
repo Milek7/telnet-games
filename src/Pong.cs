@@ -124,16 +124,18 @@ namespace TelnetGames
                     players[players.Count - 1].playerEnum = PlayerEnum.Player1;
                     gameState = GameState.Training;
                     ResetPositions();
-                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys.                                  WAITING FOR PLAYER...");
+                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit.                       WAITING FOR PLAYER...");
                 }
                 else if (FindPlayerEnum(PlayerEnum.Player2) == null)
                 {
                     players[players.Count - 1].playerEnum = PlayerEnum.Player2;
                     gameState = GameState.Normal;
                     ResetPositions();
-                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys.");
+                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit.");
                 }
             }
+            if (player.playerType == PlayerType.Spectator)
+                UpdateInfo(players[players.Count - 1], "Spectating.      Press E to exit.");
             player.vt.Flush();
         }
 
