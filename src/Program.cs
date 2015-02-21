@@ -34,7 +34,7 @@ namespace TelnetGames
                     vt.ClearScreen();
                     vt.WriteText("Welcome on TelnetGames!\r\n");
                     vt.Flush();
-                    Game.PlayerClass player = new Game.PlayerClass() { playerType = Game.PlayerType.Spectator, tcpClient = tcpClient, vt = vt };
+                    Game.PlayerClass player = new Game.PlayerClass() { playerType = Game.PlayerType.Player, tcpClient = tcpClient, vt = vt };
                     HandlePlayer(typeof(Pong), player);
                     Console.WriteLine("Client connected.");
                 }
