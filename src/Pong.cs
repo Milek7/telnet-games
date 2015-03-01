@@ -9,6 +9,9 @@ namespace TelnetGames
 {
     class Pong : Game
     {
+        //todo:
+        //mozliwosc powrotu do stanu Training
+
         private enum BallDirection
         {
             UpRight,
@@ -58,6 +61,8 @@ namespace TelnetGames
             public override VT100.ColorClass Text { get { return new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black }; } }
         }
 
+        private class PlayerRemovedException : ApplicationException { }
+
         private new class PlayerClass : Game.PlayerClass
         {
             public PlayerEnum playerEnum = PlayerEnum.None;
@@ -95,16 +100,18 @@ namespace TelnetGames
         {
             if (gameState == GameState.NotStarted)
                 return;
-            HandleInput();
-            if (gameState == GameState.NotStarted)
-                return;
-            VerifyPositions();
-            if (holdTicks == 0)
-                ComputeLogic();
-            else
-                holdTicks--;
-            RenderFrame();
-            Flush();
+            try
+            {
+                HandleInput();
+                VerifyPositions();
+                if (holdTicks == 0)
+                    ComputeLogic();
+                else
+                    holdTicks--;
+                RenderFrame();
+                Flush();
+            }
+            catch (PlayerRemovedException) { }
         }
 
         public override void AddPlayer(Game.PlayerClass player)
@@ -146,6 +153,7 @@ namespace TelnetGames
             ResetPositions();
             gameState = GameState.NotStarted;
             GameKilledRaise();
+            throw new PlayerRemovedException();
         }
 
         private void UpdateInfo(PlayerType type, string info)
@@ -169,8 +177,6 @@ namespace TelnetGames
             for (int i = players.Count - 1; i >= 0; i--)
             {
                 Flush(players[i]);
-                if (gameState == GameState.NotStarted)
-                    break;
             }
         }
 
@@ -264,8 +270,6 @@ namespace TelnetGames
             for (int i = players.Count - 1; i >= 0; i--)
             {
                 HandleInput(players[i]);
-                if (gameState == GameState.NotStarted)
-                    break;
             }
         }
 
@@ -289,7 +293,7 @@ namespace TelnetGames
                 else if (temp == 'E' || temp == 'e')
                 {
                     RemovePlayer(player);
-                    break;
+                    throw new PlayerRemovedException();
                 }
             }
         }
