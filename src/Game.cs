@@ -12,8 +12,8 @@ namespace TelnetGames
         public class PlayerClass
         {
             public PlayerType playerType;
-            public TcpClient tcpClient;
             public VT100 vt;
+            public bool compatibilityMode;
         }
 
         public enum PlayerType
@@ -25,8 +25,8 @@ namespace TelnetGames
         public event Action<Game> GameKilled;
         public event Action<Game, PlayerClass, bool> PlayerLeft;
 
-        public abstract int minPlayers { get; }
-        public abstract int maxPlayers { get; }
+        public abstract int MinPlayers { get; }
+        public abstract int MaxPlayers { get; }
         public abstract string Name { get; }
         public abstract string Description { get; }
         public abstract int PlayerCount { get; }

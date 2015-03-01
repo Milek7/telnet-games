@@ -42,32 +42,53 @@ namespace TelnetGames
             BeginningToCursor
         }
 
+        public enum FlushReturnState
+        {
+            Success,
+            Error,
+            Timeout
+        }
+
         private Socket socket;
         private MemoryStream stream;
+        private TcpClient tcpClient;
         private bool isEscapeCode = false;
 
-        public VT100(Socket socket)
+        public VT100(TcpClient tcpClient)
         {
-            this.socket = socket;
+            this.socket = tcpClient.Client;
+            this.tcpClient = tcpClient;
             socket.NoDelay = true;
             socket.SendTimeout = 10;
             stream = new MemoryStream();
             stream.Write(new byte[6] { 0xFF, 0xFB, 0x01, 0xFF, 0xFB, 0x03 }, 0, 6);
-            Flush();
         }
 
         public void Close()
         {
             stream.Dispose();
+            socket.Close();
+            tcpClient.Close();
         }
 
-        public void Flush()
+        public FlushReturnState Flush()
         {
-            stream.Seek(0, SeekOrigin.Begin);
-            byte[] buffer = new byte[stream.Length];
-            stream.Read(buffer, 0, (int)stream.Length);
-            socket.Send(buffer);
-            stream.SetLength(0);
+            try
+            {
+                stream.Seek(0, SeekOrigin.Begin);
+                byte[] buffer = new byte[stream.Length];
+                stream.Read(buffer, 0, (int)stream.Length);
+                socket.Send(buffer);
+                stream.SetLength(0);
+                return FlushReturnState.Success;
+            }
+            catch (SocketException e)
+            {
+                if (e.ErrorCode == 10060)
+                    return FlushReturnState.Timeout;
+                else
+                    return FlushReturnState.Error;
+            }
         }
 
         public void DrawLine(int x, int y, Direction direction, int length)

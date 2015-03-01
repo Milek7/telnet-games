@@ -30,17 +30,19 @@ namespace TelnetGames
                 try
                 {
                     TcpClient tcpClient = listener.AcceptTcpClient();
-                    VT100 vt = new VT100(tcpClient.Client);
+                    VT100 vt = new VT100(tcpClient);
                     vt.ClearScreen();
                     vt.WriteText("Welcome on TelnetGames!\r\n");
-                    vt.Flush();
-                    Game.PlayerClass player = new Game.PlayerClass() { playerType = Game.PlayerType.Player, tcpClient = tcpClient, vt = vt };
+                    if (vt.Flush() != VT100.FlushReturnState.Success)
+                        continue;
+                    Game.PlayerClass player = new Game.PlayerClass() { playerType = Game.PlayerType.Player, vt = vt, compatibilityMode = true };
                     HandlePlayer(typeof(Pong), player);
                     Console.WriteLine("Client connected.");
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
+                    Console.WriteLine(e.StackTrace);
                     Console.WriteLine("Failed to accept client!");
                 }
             }
@@ -57,7 +59,7 @@ namespace TelnetGames
                     Game game = games[i];
                     try
                     {
-                        if (game.minPlayers <= game.PlayerCount)
+                        if (game.MinPlayers <= game.PlayerCount)
                             game.Tick();
                     }
                     catch (Exception e)
@@ -82,7 +84,7 @@ namespace TelnetGames
             {
                 if (item.GetType() == type)
                 {
-                    if (item.PlayerCount < item.maxPlayers || player.playerType == Game.PlayerType.Spectator)
+                    if (item.PlayerCount < item.MaxPlayers || player.playerType == Game.PlayerType.Spectator)
                     {
                         game = item;
                         break;
@@ -105,24 +107,14 @@ namespace TelnetGames
             if (connectionKilled)
             {
                 Console.WriteLine("Client disconnected. (connection killed)");
-                try
-                {
-                    player.vt.Close();
-                    player.tcpClient.Close();
-                }
-                catch { }
+                player.vt.Close();
             }
             else
             {
-                try
-                {
-                    Console.WriteLine("Client disconnected. (leaved)");
-                    player.vt.WriteText("Goodbye.\r\n");
-                    player.vt.Flush();
-                    player.vt.Close();
-                    player.tcpClient.Close();
-                }
-                catch { }
+                Console.WriteLine("Client disconnected. (leaved)");
+                player.vt.WriteText("Goodbye.\r\n");
+                player.vt.Flush();
+                player.vt.Close();
             }
         }
 

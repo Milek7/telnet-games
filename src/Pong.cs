@@ -31,37 +31,31 @@ namespace TelnetGames
             Normal
         }
 
-        private class ColorPalette
+        private abstract class ColorPalette
         {
-            public VT100.ColorClass Background;
-            public VT100.ColorClass Band;
-            public VT100.ColorClass Paddle;
-            public VT100.ColorClass Ball;
-            public VT100.ColorClass Text;
+            public abstract VT100.ColorClass Background { get; }
+            public abstract VT100.ColorClass Band { get; }
+            public abstract VT100.ColorClass Paddle { get; }
+            public abstract VT100.ColorClass Ball { get; }
+            public abstract VT100.ColorClass Text { get; }
         }
 
-        private class StandardColorPalette : ColorPalette
+        private class BrightColorPalette : ColorPalette
         {
-            public StandardColorPalette()
-            {
-                Background = new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Blue };
-                Band = new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Yellow };
-                Paddle = new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Green };
-                Ball = new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Yellow };
-                Text = new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Blue };
-            }
+            public override VT100.ColorClass Background { get { return new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Blue }; } }
+            public override VT100.ColorClass Band { get { return new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Yellow }; } }
+            public override VT100.ColorClass Paddle { get { return new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Green }; } }
+            public override VT100.ColorClass Ball { get { return new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Yellow }; } }
+            public override VT100.ColorClass Text { get { return new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Blue }; } }
         }
 
-        private class CompatibilityColorPalette : ColorPalette
+        private class ClassicColorPalette : ColorPalette
         {
-            public CompatibilityColorPalette()
-            {
-                Background = new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black };
-                Band = new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Yellow };
-                Paddle = new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Green };
-                Ball = new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White };
-                Text = new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black };
-            }
+            public override VT100.ColorClass Background { get { return new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black }; } }
+            public override VT100.ColorClass Band { get { return new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Yellow }; } }
+            public override VT100.ColorClass Paddle { get { return new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Green }; } }
+            public override VT100.ColorClass Ball { get { return new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White }; } }
+            public override VT100.ColorClass Text { get { return new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black }; } }
         }
 
         private new class PlayerClass : Game.PlayerClass
@@ -69,12 +63,17 @@ namespace TelnetGames
             public PlayerEnum playerEnum = PlayerEnum.None;
             public int points = 0;
             public int paddle = 8;
+            public ColorPalette colorPalette;
 
             public PlayerClass(Game.PlayerClass gamePlayer)
             {
                 playerType = gamePlayer.playerType;
-                tcpClient = gamePlayer.tcpClient;
                 vt = gamePlayer.vt;
+                compatibilityMode = gamePlayer.compatibilityMode;
+                if (compatibilityMode)
+                    colorPalette = new ClassicColorPalette();
+                else
+                    colorPalette = new BrightColorPalette();
             }
         }
 
@@ -85,10 +84,9 @@ namespace TelnetGames
         private List<PlayerClass> players = new List<PlayerClass>();
         private int holdTicks;
         private int playerCount;
-        private ColorPalette colorPalette = new CompatibilityColorPalette();
 
-        public override int minPlayers { get { return 1; } }
-        public override int maxPlayers { get { return 2; } }
+        public override int MinPlayers { get { return 1; } }
+        public override int MaxPlayers { get { return 2; } }
         public override string Name { get { return "Pong (multiplayer)"; } }
         public override string Description { get { return ""; } }
         public override int PlayerCount { get { return playerCount; } }
@@ -111,7 +109,6 @@ namespace TelnetGames
 
         public override void AddPlayer(Game.PlayerClass player)
         {
-            player.vt.SetForegroundColor(colorPalette.Text);
             player.vt.SetCursorVisiblity(false);
             player.vt.Bell();
             players.Add(new PlayerClass(player));
@@ -160,7 +157,8 @@ namespace TelnetGames
 
         private void UpdateInfo(PlayerClass player, string info)
         {
-            player.vt.SetBackgroundColor(colorPalette.Band);
+            player.vt.SetBackgroundColor(player.colorPalette.Band);
+            player.vt.SetForegroundColor(player.colorPalette.Text);
             player.vt.SetCursor(1, 24);
             player.vt.ClearLine();
             player.vt.WriteText(info);
@@ -178,26 +176,22 @@ namespace TelnetGames
 
         private void Flush(PlayerClass player)
         {
-            try
+            switch (player.vt.Flush())
             {
-                player.vt.Flush();
-            }
-            catch (SocketException e)
-            {
-                if (e.ErrorCode == 10060)
-                {
+                case VT100.FlushReturnState.Success:
+                    break;
+                case VT100.FlushReturnState.Timeout:
                     Console.WriteLine("Flush timeout, skipping frame!");
-                }
-                else
-                {
-                    Console.WriteLine("Flush exception! Code: " + e.ErrorCode);
+                    break;
+                case VT100.FlushReturnState.Error:
+                    Console.WriteLine("Flush exception!");
                     players.Remove(player);
                     if (player.playerType == PlayerType.Player)
                         playerCount--;
                     PlayerLeftRaise(player, true);
                     if (player.playerType == PlayerType.Player)
                         KillGame();
-                }
+                    break;
             }
         }
 
@@ -239,11 +233,11 @@ namespace TelnetGames
             PlayerClass player1 = FindPlayerEnum(PlayerEnum.Player1);
             PlayerClass player2 = FindPlayerEnum(PlayerEnum.Player2);
 
-            player.vt.SetBackgroundColor(colorPalette.Background);
+            player.vt.SetBackgroundColor(player.colorPalette.Background);
             player.vt.SetCursor(79, 22);
             player.vt.ClearScreen(VT100.ClearMode.BeginningToCursor);
 
-            player.vt.SetBackgroundColor(colorPalette.Band);
+            player.vt.SetBackgroundColor(player.colorPalette.Band);
             player.vt.SetCursor(0, 0);
             player.vt.ClearLine();
 
@@ -256,12 +250,12 @@ namespace TelnetGames
                 player.vt.WriteText((player1.points < 10 ? " " + player1.points.ToString() : player1.points.ToString()) + " : " + player2.points.ToString());
             }
 
-            player.vt.SetBackgroundColor(colorPalette.Paddle);
-            player.vt.DrawLine(0, FindPlayerEnum(PlayerEnum.Player1).paddle + 1, VT100.Direction.Vertical, 5);
+            player.vt.SetBackgroundColor(player.colorPalette.Paddle);
+            player.vt.DrawLine(0, FindPlayerEnum(PlayerEnum.Player1).paddle + 1, VT100.Direction.Vertical, 4);
             if (gameState == GameState.Normal)
-                player.vt.DrawLine(79, FindPlayerEnum(PlayerEnum.Player2).paddle + 1, VT100.Direction.Vertical, 5);
+                player.vt.DrawLine(79, FindPlayerEnum(PlayerEnum.Player2).paddle + 1, VT100.Direction.Vertical, 4);
 
-            player.vt.SetBackgroundColor(colorPalette.Ball);
+            player.vt.SetBackgroundColor(player.colorPalette.Ball);
             player.vt.DrawLine(ballX, ballY + 1, VT100.Direction.Horizontal, 2);
         }
 
@@ -317,7 +311,7 @@ namespace TelnetGames
                     }
                     if (ballX == 77)
                     {
-                        if (gameState == GameState.Training || (player2.paddle - 1 <= ballY && ballY < player2.paddle + 6))
+                        if (gameState == GameState.Training || (player2.paddle - 1 <= ballY && ballY < player2.paddle + 5))
                         {
                             ballDirection = BallDirection.UpLeft;
                             ComputeLogic();
@@ -343,7 +337,7 @@ namespace TelnetGames
                     }
                     if (ballX == 77)
                     {
-                        if (gameState == GameState.Training || (player2.paddle - 1 <= ballY && ballY < player2.paddle + 6))
+                        if (gameState == GameState.Training || (player2.paddle - 1 <= ballY && ballY < player2.paddle + 5))
                         {
                             ballDirection = BallDirection.DownLeft;
                             ComputeLogic();
@@ -369,7 +363,7 @@ namespace TelnetGames
                     }
                     if (ballX == 1)
                     {
-                        if (player1.paddle - 1 <= ballY && ballY < player1.paddle + 6)
+                        if (player1.paddle - 1 <= ballY && ballY < player1.paddle + 5)
                         {
                             ballDirection = BallDirection.DownRight;
                             ComputeLogic();
@@ -395,7 +389,7 @@ namespace TelnetGames
                     }
                     if (ballX == 1)
                     {
-                        if (player1.paddle - 1 <= ballY && ballY < player1.paddle + 6)
+                        if (player1.paddle - 1 <= ballY && ballY < player1.paddle + 5)
                         {
                             ballDirection = BallDirection.UpRight;
                             ComputeLogic();
@@ -421,14 +415,14 @@ namespace TelnetGames
 
             if (player1.paddle < 0)
                 player1.paddle = 0;
-            if (player1.paddle > 17)
-                player1.paddle = 17;
+            if (player1.paddle > 18)
+                player1.paddle = 18;
             if (gameState == GameState.Normal)
             {
                 if (player2.paddle < 0)
                     player2.paddle = 0;
-                if (player2.paddle > 17)
-                    player2.paddle = 17;
+                if (player2.paddle > 18)
+                    player2.paddle = 18;
             }
         }
 
@@ -455,20 +449,17 @@ namespace TelnetGames
             players.Remove(player);
             if (player.playerType == PlayerType.Player)
                 playerCount--;
-            try
-            {
-                player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
-                player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
-                player.vt.SetCursor(0, 0);
-                player.vt.SetCursorVisiblity(true);
-                player.vt.ClearScreen();
-                player.vt.Flush();
+
+            player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
+            player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
+            player.vt.SetCursor(0, 0);
+            player.vt.SetCursorVisiblity(true);
+            player.vt.ClearScreen();
+
+            if (player.vt.Flush() == VT100.FlushReturnState.Success)
                 PlayerLeftRaise(player, false);
-            }
-            catch (SocketException)
-            {
+            else
                 PlayerLeftRaise(player, true);
-            }
         }
 
         private PlayerClass FindPlayerEnum(PlayerEnum playerEnum)
