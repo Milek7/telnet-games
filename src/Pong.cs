@@ -9,9 +9,6 @@ namespace TelnetGames
 {
     class Pong : Game
     {
-        //todo:
-        //mozliwosc powrotu do stanu Training
-
         private enum BallDirection
         {
             UpRight,
@@ -123,14 +120,14 @@ namespace TelnetGames
                 playerCount++;
             if (player.playerType == PlayerType.Player)
             {
-                if (FindPlayerEnum(PlayerEnum.Player1) == null)
+                if (gameState == GameState.NotStarted)
                 {
                     players[players.Count - 1].playerEnum = PlayerEnum.Player1;
                     gameState = GameState.Training;
                     ResetPositions();
                     UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit.                       WAITING FOR PLAYER...");
                 }
-                else if (FindPlayerEnum(PlayerEnum.Player2) == null)
+                else if (gameState == GameState.Training)
                 {
                     players[players.Count - 1].playerEnum = PlayerEnum.Player2;
                     gameState = GameState.Normal;
@@ -150,8 +147,6 @@ namespace TelnetGames
             {
                 RemovePlayer(players[i]);
             }
-            ResetPositions();
-            gameState = GameState.NotStarted;
             GameKilledRaise();
             throw new PlayerRemovedException();
         }
@@ -191,13 +186,8 @@ namespace TelnetGames
                     break;
                 case VT100.FlushReturnState.Error:
                     Console.WriteLine("Flush exception!");
-                    players.Remove(player);
-                    if (player.playerType == PlayerType.Player)
-                        playerCount--;
-                    PlayerLeftRaise(player, true);
-                    if (player.playerType == PlayerType.Player)
-                        KillGame();
-                    break;
+                    RemovePlayer(player);
+                    throw new PlayerRemovedException();
             }
         }
 
@@ -223,7 +213,7 @@ namespace TelnetGames
             if (player2 != null)
             {
                 player2.paddle = 8;
-                if (player1.playerEnum == playerEnum)
+                if (player2.playerEnum == playerEnum)
                     ballDirection = BallDirection.UpRight;
             }
         }
@@ -286,8 +276,8 @@ namespace TelnetGames
                         player.paddle++;
                     if (temp == 'E' || temp == 'e')
                     {
-                        KillGame();
-                        break;
+                        RemovePlayer(player);
+                        throw new PlayerRemovedException();
                     }
                 }
                 else if (temp == 'E' || temp == 'e')
@@ -452,8 +442,22 @@ namespace TelnetGames
         {
             players.Remove(player);
             if (player.playerType == PlayerType.Player)
+            {
                 playerCount--;
-
+                ResetPositions();
+                if (playerCount == 1)
+                {
+                    gameState = GameState.Training;
+                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit.                       WAITING FOR PLAYER...");
+                    if (player.playerEnum == PlayerEnum.Player1)
+                        FindPlayerEnum(PlayerEnum.Player2).playerEnum = PlayerEnum.Player1;
+                }
+                if (playerCount == 0)
+                {
+                    gameState = GameState.NotStarted;
+                    KillGame();
+                }
+            }
             player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
             player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
             player.vt.SetCursor(0, 0);
