@@ -445,6 +445,20 @@ namespace TelnetGames
             {
                 playerCount--;
                 ResetPositions();
+            }
+            player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
+            player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
+            player.vt.SetCursor(0, 0);
+            player.vt.SetCursorVisiblity(true);
+            player.vt.ClearScreen();
+
+            if (player.vt.Flush() == VT100.FlushReturnState.Success)
+                PlayerLeftRaise(player, false);
+            else
+                PlayerLeftRaise(player, true);
+
+            if (player.playerType == PlayerType.Player)
+            {
                 if (playerCount == 1)
                 {
                     gameState = GameState.Training;
@@ -458,16 +472,6 @@ namespace TelnetGames
                     KillGame();
                 }
             }
-            player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
-            player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
-            player.vt.SetCursor(0, 0);
-            player.vt.SetCursorVisiblity(true);
-            player.vt.ClearScreen();
-
-            if (player.vt.Flush() == VT100.FlushReturnState.Success)
-                PlayerLeftRaise(player, false);
-            else
-                PlayerLeftRaise(player, true);
         }
 
         private PlayerClass FindPlayerEnum(PlayerEnum playerEnum)
