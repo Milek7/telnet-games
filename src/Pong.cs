@@ -445,6 +445,18 @@ namespace TelnetGames
             {
                 playerCount--;
                 ResetPositions();
+                if (playerCount == 1)
+                {
+                    gameState = GameState.Training;
+                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit.                       WAITING FOR PLAYER...");
+                    if (player.playerEnum == PlayerEnum.Player1)
+                        FindPlayerEnum(PlayerEnum.Player2).playerEnum = PlayerEnum.Player1;
+                }
+                if (playerCount == 0)
+                {
+                    gameState = GameState.NotStarted;
+                    KillGame();
+                }
             }
             player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
             player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
@@ -456,24 +468,6 @@ namespace TelnetGames
                 PlayerLeftRaise(player, false);
             else
                 PlayerLeftRaise(player, true);
-
-            if (player.playerType == PlayerType.Player)
-            {
-                if (playerCount == 1)
-                {
-                    gameState = GameState.Training;
-                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit.                       WAITING FOR PLAYER...");
-                    player.vt.SetCursor(36, 0);
-                    player.vt.WriteText("        ");
-                    if (player.playerEnum == PlayerEnum.Player1)
-                        FindPlayerEnum(PlayerEnum.Player2).playerEnum = PlayerEnum.Player1;
-                }
-                if (playerCount == 0)
-                {
-                    gameState = GameState.NotStarted;
-                    KillGame();
-                }
-            }
         }
 
         private PlayerClass FindPlayerEnum(PlayerEnum playerEnum)
