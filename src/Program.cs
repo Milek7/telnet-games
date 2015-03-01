@@ -95,7 +95,7 @@ namespace TelnetGames
                 game = (Game)Activator.CreateInstance(type);
                 game.GameKilled += OnGameKilled;
                 game.PlayerLeft += OnPlayerLeft;
-                game.PlayerHangoff += OnPlayerHangoff;
+                game.PlayerHandoff += OnPlayerHandoff;
                 games.Add(game);
                 Console.WriteLine("Game created.");
             }
@@ -124,7 +124,7 @@ namespace TelnetGames
             }
         }
 
-        static void OnPlayerHangoff(Game game, Type destination, Game.PlayerClass player)
+        static void OnPlayerHandoff(Game game, Type destination, Game.PlayerClass player)
         {
             HandlePlayer(destination, player);
         }
@@ -133,7 +133,7 @@ namespace TelnetGames
         {
             game.GameKilled -= OnGameKilled;
             game.PlayerLeft -= OnPlayerLeft;
-            game.PlayerHangoff -= OnPlayerHangoff;
+            game.PlayerHandoff -= OnPlayerHandoff;
             games.Remove(game);
         }
     }

@@ -130,6 +130,8 @@ namespace TelnetGames
                 else if (gameState == GameState.Training)
                 {
                     players[players.Count - 1].playerEnum = PlayerEnum.Player2;
+                    FindPlayerEnum(PlayerEnum.Player1).points = 0;
+                    FindPlayerEnum(PlayerEnum.Player2).points = 0;
                     gameState = GameState.Normal;
                     ResetPositions();
                     UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit.");
@@ -445,18 +447,6 @@ namespace TelnetGames
             {
                 playerCount--;
                 ResetPositions();
-            }
-            player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
-            player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
-            player.vt.SetCursor(0, 0);
-            player.vt.SetCursorVisiblity(true);
-            player.vt.ClearScreen();
-            if (player.vt.Flush() == VT100.FlushReturnState.Success)
-                PlayerLeftRaise(player, false);
-            else
-                PlayerLeftRaise(player, true);
-            if (player.playerType == PlayerType.Player)
-            {
                 if (playerCount == 1)
                 {
                     gameState = GameState.Training;
@@ -470,6 +460,15 @@ namespace TelnetGames
                     KillGame();
                 }
             }
+            player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
+            player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
+            player.vt.SetCursor(0, 0);
+            player.vt.SetCursorVisiblity(true);
+            player.vt.ClearScreen();
+            if (player.vt.Flush() == VT100.FlushReturnState.Success)
+                PlayerLeftRaise(player, false);
+            else
+                PlayerLeftRaise(player, true);
         }
 
         private PlayerClass FindPlayerEnum(PlayerEnum playerEnum)

@@ -24,7 +24,7 @@ namespace TelnetGames
 
         public event Action<Game> GameKilled;
         public event Action<Game, PlayerClass, bool> PlayerLeft;
-        public event Action<Game, Type, PlayerClass> PlayerHangoff;
+        public event Action<Game, Type, PlayerClass> PlayerHandoff;
 
         public abstract int MinPlayers { get; }
         public abstract int MaxPlayers { get; }
@@ -48,10 +48,10 @@ namespace TelnetGames
                 PlayerLeft(this, player, connectionKilled);
         }
 
-        protected void PlayerHangoffRaise(Type destination, PlayerClass player)
+        protected void PlayerHandoffRaise(Type destination, PlayerClass player)
         {
-            if (PlayerHangoff != null)
-                PlayerHangoff(this, destination, player);
+            if (PlayerHandoff != null)
+                PlayerHandoff(this, destination, player);
         }
     }
 }

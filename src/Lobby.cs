@@ -39,7 +39,7 @@ namespace TelnetGames
                     if (temp == '1')
                     {
                         players.Remove(player);
-                        PlayerHangoffRaise(typeof(Pong), player);
+                        PlayerHandoffRaise(typeof(Pong), player);
                         break;
                     }
                     if (temp == 'E' || temp == 'e')
