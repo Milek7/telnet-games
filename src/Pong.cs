@@ -100,11 +100,7 @@ namespace TelnetGames
             try
             {
                 HandleInput();
-                VerifyPositions();
-                if (holdTicks == 0)
-                    ComputeLogic();
-                else
-                    holdTicks--;
+                ComputeLogic();
                 RenderFrame();
                 Flush();
             }
@@ -295,6 +291,24 @@ namespace TelnetGames
             PlayerClass player1 = FindPlayerEnum(PlayerEnum.Player1);
             PlayerClass player2 = FindPlayerEnum(PlayerEnum.Player2);
 
+            if (player1.paddle < 0)
+                player1.paddle = 0;
+            if (player1.paddle > 18)
+                player1.paddle = 18;
+            if (gameState == GameState.Normal)
+            {
+                if (player2.paddle < 0)
+                    player2.paddle = 0;
+                if (player2.paddle > 18)
+                    player2.paddle = 18;
+            }
+
+            if (holdTicks > 0)
+            {
+                holdTicks--;
+                return;
+            }
+
             switch (ballDirection)
             {
                 case BallDirection.UpRight:
@@ -404,24 +418,6 @@ namespace TelnetGames
             }
         }
 
-        private void VerifyPositions()
-        {
-            PlayerClass player1 = FindPlayerEnum(PlayerEnum.Player1);
-            PlayerClass player2 = FindPlayerEnum(PlayerEnum.Player2);
-
-            if (player1.paddle < 0)
-                player1.paddle = 0;
-            if (player1.paddle > 18)
-                player1.paddle = 18;
-            if (gameState == GameState.Normal)
-            {
-                if (player2.paddle < 0)
-                    player2.paddle = 0;
-                if (player2.paddle > 18)
-                    player2.paddle = 18;
-            }
-        }
-
         private void Bell()
         {
             for (int i = players.Count - 1; i >= 0; i--)
@@ -457,7 +453,6 @@ namespace TelnetGames
                 if (playerCount == 0)
                 {
                     gameState = GameState.NotStarted;
-                    KillGame();
                 }
             }
             player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
@@ -469,6 +464,9 @@ namespace TelnetGames
                 PlayerLeftRaise(player, false);
             else
                 PlayerLeftRaise(player, true);
+            if (player.playerType == PlayerType.Player)
+                if (playerCount == 0)
+                    KillGame();
         }
 
         private PlayerClass FindPlayerEnum(PlayerEnum playerEnum)
