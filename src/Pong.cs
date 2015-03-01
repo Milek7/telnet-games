@@ -460,7 +460,7 @@ namespace TelnetGames
                 if (playerCount == 1)
                 {
                     gameState = GameState.Training;
-                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit. WAITING FOR PLAYER...");
+                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit.                       WAITING FOR PLAYER...");
                     if (player.playerEnum == PlayerEnum.Player1)
                         FindPlayerEnum(PlayerEnum.Player2).playerEnum = PlayerEnum.Player1;
                 }
