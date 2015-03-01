@@ -463,6 +463,8 @@ namespace TelnetGames
                 {
                     gameState = GameState.Training;
                     UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit.                       WAITING FOR PLAYER...");
+                    player.vt.SetCursor(36, 0);
+                    player.vt.WriteText("        ");
                     if (player.playerEnum == PlayerEnum.Player1)
                         FindPlayerEnum(PlayerEnum.Player2).playerEnum = PlayerEnum.Player1;
                 }
