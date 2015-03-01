@@ -31,12 +31,11 @@ namespace TelnetGames
                 {
                     TcpClient tcpClient = listener.AcceptTcpClient();
                     VT100 vt = new VT100(tcpClient);
-                    vt.ClearScreen();
-                    vt.WriteText("Welcome on TelnetGames!\r\n");
+                    vt.Bell();
                     if (vt.Flush() != VT100.FlushReturnState.Success)
                         continue;
                     Game.PlayerClass player = new Game.PlayerClass() { playerType = Game.PlayerType.Player, vt = vt, compatibilityMode = true };
-                    HandlePlayer(typeof(Pong), player);
+                    HandlePlayer(typeof(Lobby), player);
                     Console.WriteLine("Client connected.");
                 }
                 catch (Exception e)
@@ -84,7 +83,7 @@ namespace TelnetGames
             {
                 if (item.GetType() == type)
                 {
-                    if (item.PlayerCount < item.MaxPlayers || player.playerType == Game.PlayerType.Spectator)
+                    if (item.PlayerCount < item.MaxPlayers || item.MaxPlayers == -1 || player.playerType == Game.PlayerType.Spectator)
                     {
                         game = item;
                         break;
@@ -96,6 +95,7 @@ namespace TelnetGames
                 game = (Game)Activator.CreateInstance(type);
                 game.GameKilled += OnGameKilled;
                 game.PlayerLeft += OnPlayerLeft;
+                game.PlayerHangoff += OnPlayerHangoff;
                 games.Add(game);
                 Console.WriteLine("Game created.");
             }
@@ -111,17 +111,29 @@ namespace TelnetGames
             }
             else
             {
-                Console.WriteLine("Client disconnected. (leaved)");
-                player.vt.WriteText("Goodbye.\r\n");
-                player.vt.Flush();
-                player.vt.Close();
+                if (game.GetType() == typeof(Lobby))
+                {
+                    Console.WriteLine("Client disconnected. (leaved)");
+                    player.vt.ClearScreen();
+                    player.vt.WriteText("Goodbye.\r\n");
+                    player.vt.Flush();
+                    player.vt.Close();
+                }
+                else
+                    HandlePlayer(typeof(Lobby), player);
             }
+        }
+
+        static void OnPlayerHangoff(Game game, Type destination, Game.PlayerClass player)
+        {
+            HandlePlayer(destination, player);
         }
 
         static void OnGameKilled(Game game)
         {
             game.GameKilled -= OnGameKilled;
             game.PlayerLeft -= OnPlayerLeft;
+            game.PlayerHangoff -= OnPlayerHangoff;
             games.Remove(game);
         }
     }

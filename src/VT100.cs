@@ -38,8 +38,8 @@ namespace TelnetGames
         public enum ClearMode
         {
             CursorToEnd,
-            Entire,
-            BeginningToCursor
+            BeginningToCursor,
+            Entire
         }
 
         public enum FlushReturnState
@@ -167,7 +167,7 @@ namespace TelnetGames
 
         public void ClearScreen(ClearMode clearMode)
         {
-            int clearCode = 47 + (int)clearMode;
+            int clearCode = 48 + (int)clearMode;
             byte[] buffer = new byte[4] { 27, 91, (byte)clearCode, 74 };
             stream.Write(buffer, 0, buffer.Length);
         }
