@@ -59,6 +59,7 @@ namespace TelnetGames
             this.socket = tcpClient.Client;
             this.tcpClient = tcpClient;
             socket.NoDelay = true;
+            socket.Blocking = true;
             socket.SendTimeout = 10;
             stream = new MemoryStream();
             stream.Write(new byte[6] { 0xFF, 0xFB, 0x01, 0xFF, 0xFB, 0x03 }, 0, 6);
@@ -180,7 +181,7 @@ namespace TelnetGames
         public void ClearLine(ClearMode clearMode)
         {
             int clearCode = 48 + (int)clearMode;
-            byte[] buffer = new byte[4] { 27, 91, (byte)clearMode, 75 };
+            byte[] buffer = new byte[4] { 27, 91, (byte)clearCode, 75 };
             stream.Write(buffer, 0, buffer.Length);
         }
 

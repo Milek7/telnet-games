@@ -80,10 +80,8 @@ namespace TelnetGames
                 case VT100.FlushReturnState.Success:
                     break;
                 case VT100.FlushReturnState.Timeout:
-                    Console.WriteLine("Flush timeout, skipping frame!");
                     break;
                 case VT100.FlushReturnState.Error:
-                    Console.WriteLine("Flush exception!");
                     players.Remove(player);
                     PlayerLeftRaise(player, true);
                     break;
