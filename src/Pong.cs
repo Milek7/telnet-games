@@ -206,13 +206,13 @@ namespace TelnetGames
             if (player1 != null)
             {
                 player1.paddle = 8;
-                if (player1.playerEnum == playerEnum)
+                if (playerEnum == PlayerEnum.Player2)
                     ballDirection = BallDirection.UpLeft;
             }
             if (player2 != null)
             {
                 player2.paddle = 8;
-                if (player2.playerEnum == playerEnum)
+                if (playerEnum == PlayerEnum.Player1)
                     ballDirection = BallDirection.UpRight;
             }
         }
