@@ -174,7 +174,13 @@ namespace TelnetGames
 
         public void ClearLine()
         {
-            byte[] buffer = new byte[4] { 27, 91, 50, 75 };
+            ClearLine(ClearMode.Entire);
+        }
+
+        public void ClearLine(ClearMode clearMode)
+        {
+            int clearCode = 48 + (int)clearMode;
+            byte[] buffer = new byte[4] { 27, 91, (byte)clearMode, 75 };
             stream.Write(buffer, 0, buffer.Length);
         }
 

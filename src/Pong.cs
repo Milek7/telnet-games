@@ -46,7 +46,7 @@ namespace TelnetGames
             public override VT100.ColorClass Band { get { return new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Yellow }; } }
             public override VT100.ColorClass Paddle { get { return new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Green }; } }
             public override VT100.ColorClass Ball { get { return new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Yellow }; } }
-            public override VT100.ColorClass Text { get { return new VT100.ColorClass { Bright = true, Color = VT100.ColorEnum.Blue }; } }
+            public override VT100.ColorClass Text { get { return new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black }; } }
         }
 
         private class ClassicColorPalette : ColorPalette
@@ -71,11 +71,11 @@ namespace TelnetGames
             {
                 playerType = gamePlayer.playerType;
                 vt = gamePlayer.vt;
-                compatibilityMode = gamePlayer.compatibilityMode;
-                if (compatibilityMode)
-                    colorPalette = new ClassicColorPalette();
-                else
+                supportAixtermColors = gamePlayer.supportAixtermColors;
+                if (supportAixtermColors)
                     colorPalette = new BrightColorPalette();
+                else
+                    colorPalette = new ClassicColorPalette();
             }
         }
 
@@ -89,8 +89,6 @@ namespace TelnetGames
 
         public override int MinPlayers { get { return 1; } }
         public override int MaxPlayers { get { return 2; } }
-        public override string Name { get { return "Pong (multiplayer)"; } }
-        public override string Description { get { return ""; } }
         public override int PlayerCount { get { return playerCount; } }
 
         public override void Tick()
@@ -121,7 +119,6 @@ namespace TelnetGames
                     players[players.Count - 1].playerEnum = PlayerEnum.Player1;
                     gameState = GameState.Training;
                     ResetPositions();
-                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit.                       WAITING FOR PLAYER...");
                 }
                 else if (gameState == GameState.Training)
                 {
@@ -130,17 +127,14 @@ namespace TelnetGames
                     FindPlayerEnum(PlayerEnum.Player2).points = 0;
                     gameState = GameState.Normal;
                     ResetPositions();
-                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit.");
                 }
             }
-            if (player.playerType == PlayerType.Spectator)
-                UpdateInfo(players[players.Count - 1], "Spectating.      Press E to exit.");
+            UpdateInfo();
             player.vt.Flush();
         }
 
         public override void KillGame()
         {
-            Console.WriteLine("Killing game!");
             for (int i = players.Count - 1; i >= 0; i--)
             {
                 RemovePlayer(players[i]);
@@ -149,11 +143,20 @@ namespace TelnetGames
             throw new PlayerRemovedException();
         }
 
-        private void UpdateInfo(PlayerType type, string info)
+        private void UpdateInfo()
         {
             for (int i = players.Count - 1; i >= 0; i--)
-                if (players[i].playerType == type)
-                    UpdateInfo(players[i], info);
+            {
+                if (players[i].playerType == PlayerType.Player)
+                {
+                    if (gameState == GameState.Training)
+                        UpdateInfo(players[i], "CONTROLS: A and Z keys, E to exit.                       WAITING FOR PLAYER...");
+                    else if (gameState == GameState.Normal)
+                        UpdateInfo(players[i], "CONTROLS: A and Z keys, E to exit.");
+                }
+                else if (players[i].playerType == PlayerType.Spectator)
+                    UpdateInfo(players[i], "Spectating.      Press E to exit.");
+            }
         }
 
         private void UpdateInfo(PlayerClass player, string info)
@@ -180,10 +183,8 @@ namespace TelnetGames
                 case VT100.FlushReturnState.Success:
                     break;
                 case VT100.FlushReturnState.Timeout:
-                    Console.WriteLine("Flush timeout, skipping frame!");
                     break;
                 case VT100.FlushReturnState.Error:
-                    Console.WriteLine("Flush exception!");
                     RemovePlayer(player);
                     throw new PlayerRemovedException();
             }
@@ -240,6 +241,7 @@ namespace TelnetGames
 
             if (gameState == GameState.Normal)
             {
+                player.vt.SetForegroundColor(player.colorPalette.Text);
                 player.vt.SetCursor(36, 0);
                 player.vt.WriteText((player1.points < 10 ? " " + player1.points.ToString() : player1.points.ToString()) + " : " + player2.points.ToString());
             }
@@ -268,6 +270,15 @@ namespace TelnetGames
             {
                 if (player.playerType == PlayerType.Player)
                 {
+                    if (temp == 'C' || temp == 'c')
+                    {
+                        player.supportAixtermColors = !player.supportAixtermColors;
+                        if (player.supportAixtermColors)
+                            player.colorPalette = new BrightColorPalette();
+                        else
+                            player.colorPalette = new ClassicColorPalette();
+                        UpdateInfo();
+                    }
                     if (temp == 'A' || temp == 'a')
                         player.paddle--;
                     if (temp == 'Z' || temp == 'z')
@@ -446,7 +457,7 @@ namespace TelnetGames
                 if (playerCount == 1)
                 {
                     gameState = GameState.Training;
-                    UpdateInfo(PlayerType.Player, "CONTROLS: A and Z keys, E to exit.                       WAITING FOR PLAYER...");
+                    UpdateInfo();
                     if (player.playerEnum == PlayerEnum.Player1)
                         FindPlayerEnum(PlayerEnum.Player2).playerEnum = PlayerEnum.Player1;
                 }
@@ -455,11 +466,6 @@ namespace TelnetGames
                     gameState = GameState.NotStarted;
                 }
             }
-            player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
-            player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
-            player.vt.SetCursor(0, 0);
-            player.vt.SetCursorVisiblity(true);
-            player.vt.ClearScreen();
             if (player.vt.Flush() == VT100.FlushReturnState.Success)
                 PlayerLeftRaise(player, false);
             else

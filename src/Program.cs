@@ -15,6 +15,25 @@ namespace TelnetGames
     {
         static List<Game> games = new List<Game>();
         static Thread GameThread;
+        public static int GameCount
+        {
+            get
+            {
+                return games.Count;
+            }
+        }
+        public static int AverageFrameProcessingTime
+        {
+            get
+            {
+                int avg = avgTime / avgCount;
+                avgTime = avg;
+                avgCount = 1;
+                return avg;
+            }
+        }
+        private static int avgTime;
+        private static int avgCount = 1;
 
         static void Main(string[] args)
         {
@@ -34,15 +53,19 @@ namespace TelnetGames
                     vt.Bell();
                     if (vt.Flush() != VT100.FlushReturnState.Success)
                         continue;
-                    Game.PlayerClass player = new Game.PlayerClass() { playerType = Game.PlayerType.Player, vt = vt, compatibilityMode = true };
+                    Game.PlayerClass player = new Game.PlayerClass() { vt = vt };
                     HandlePlayer(typeof(Lobby), player);
                     Console.WriteLine("Client connected.");
                 }
+                catch (SocketException)
+                {
+                    Console.WriteLine("Failed to accept client!");
+                }
                 catch (Exception e)
                 {
+                    Console.WriteLine("Failed to accept client!");
                     Console.WriteLine(e.Message);
                     Console.WriteLine(e.StackTrace);
-                    Console.WriteLine("Failed to accept client!");
                 }
             }
         }
@@ -70,9 +93,13 @@ namespace TelnetGames
                     }
                 }
                 stopwatch.Stop();
+                avgTime += (int)stopwatch.ElapsedMilliseconds;
+                avgCount++;
                 int sleep = 50 - (int)stopwatch.ElapsedMilliseconds;
                 if (sleep > 0)
                     Thread.Sleep(sleep);
+                else
+                    Console.WriteLine("Heavy server load! Frame processing time: " + stopwatch.ElapsedMilliseconds + "ms");
             }
         }
 
@@ -100,6 +127,7 @@ namespace TelnetGames
                 Console.WriteLine("Game created.");
             }
             game.AddPlayer(player);
+            Console.WriteLine("Player assigned to game.");
         }
 
         static void OnPlayerLeft(Game game, Game.PlayerClass player, bool connectionKilled)
@@ -114,7 +142,10 @@ namespace TelnetGames
                 if (game.GetType() == typeof(Lobby))
                 {
                     Console.WriteLine("Client disconnected. (leaved)");
+                    player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
+                    player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
                     player.vt.ClearScreen();
+                    player.vt.SetCursor(0, 0);
                     player.vt.WriteText("Goodbye.\r\n");
                     player.vt.Flush();
                     player.vt.Close();
@@ -135,6 +166,7 @@ namespace TelnetGames
             game.PlayerLeft -= OnPlayerLeft;
             game.PlayerHandoff -= OnPlayerHandoff;
             games.Remove(game);
+            Console.WriteLine("Game killed.");
         }
     }
 }

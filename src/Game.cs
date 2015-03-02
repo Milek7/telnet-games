@@ -13,7 +13,7 @@ namespace TelnetGames
         {
             public PlayerType playerType;
             public VT100 vt;
-            public bool compatibilityMode;
+            public bool supportAixtermColors;
         }
 
         public enum PlayerType
@@ -28,8 +28,6 @@ namespace TelnetGames
 
         public abstract int MinPlayers { get; }
         public abstract int MaxPlayers { get; }
-        public abstract string Name { get; }
-        public abstract string Description { get; }
         public abstract int PlayerCount { get; }
 
         public abstract void Tick();
