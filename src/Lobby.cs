@@ -26,7 +26,7 @@ namespace TelnetGames
             else
             {
                 keepAlive = 100;
-                gameCount = Program.GameCount;
+                gameCount = Program.GameCount - 1;
                 averageFrameProcessingTime = Program.AverageFrameProcessingTime;
                 RenderFrame(false);
             }
@@ -49,6 +49,12 @@ namespace TelnetGames
                 {
                     players.Remove(player);
                     PlayerHandoffRaise(typeof(Pong), player);
+                    break;
+                }
+                if (temp == '2')
+                {
+                    players.Remove(player);
+                    PlayerHandoffRaise(typeof(Breakout), player);
                     break;
                 }
                 if (temp == 'E' || temp == 'e')
@@ -118,8 +124,9 @@ namespace TelnetGames
                 player.vt.SetCursor(0, 5);
                 player.vt.WriteText("Select game:");
                 player.vt.SetCursor(0, 6);
-                player.vt.WriteText("1: Pong (multiplayer)");
-                player.vt.SetCursor(0, 8);
+                player.vt.WriteText("1: Pong (multiplayer)\r\n");
+                player.vt.WriteText("2: Breakout (WIP!)");
+                player.vt.SetCursor(0, 9);
                 player.vt.WriteText("E - Exit, C - ");
                 if (player.supportAixtermColors)
                     player.vt.WriteText("Disable");

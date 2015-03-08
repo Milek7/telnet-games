@@ -44,6 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\src\Breakout.cs">
+      <Link>Breakout.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Game.cs">
       <Link>Game.cs</Link>
     </Compile>

@@ -63,7 +63,7 @@ namespace TelnetGames
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Failed to accept client!");
+                    Console.WriteLine("Failed to accept client! (THIS SHOULD NOT HAPPEN!)");
                     Console.WriteLine(e.Message);
                     Console.WriteLine(e.StackTrace);
                 }
@@ -86,9 +86,9 @@ namespace TelnetGames
                     }
                     catch (Exception e)
                     {
+                        Console.WriteLine("Game.Tick exception, killing game! (THIS SHOULD NOT HAPPEN!)");
                         Console.WriteLine(e.Message);
                         Console.WriteLine(e.StackTrace);
-                        Console.WriteLine("Game.Tick exception, killing game! (THIS SHOULD NOT HAPPEN!)");
                         OnGameKilled(game);
                     }
                 }
@@ -127,7 +127,7 @@ namespace TelnetGames
                 Console.WriteLine("Game created.");
             }
             game.AddPlayer(player);
-            Console.WriteLine("Player assigned to game.");
+            Console.WriteLine("Player assigned.");
         }
 
         static void OnPlayerLeft(Game game, Game.PlayerClass player, bool connectionKilled)
