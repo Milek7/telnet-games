@@ -59,7 +59,7 @@ namespace TelnetGames
             this.socket = tcpClient.Client;
             this.tcpClient = tcpClient;
             socket.NoDelay = true;
-            socket.Blocking = true;
+            socket.Blocking = false;
             socket.SendTimeout = 10;
             stream = new MemoryStream();
             stream.Write(new byte[6] { 0xFF, 0xFB, 0x01, 0xFF, 0xFB, 0x03 }, 0, 6);
@@ -201,31 +201,11 @@ namespace TelnetGames
                 socket.Receive(buffer);
                 if (isEscapeCode && ((buffer[0] > 64 && buffer[0] < 91) || (buffer[0] > 96 && buffer[0] < 123)))
                     isEscapeCode = false;
-                else if (buffer[0] == 27) 
+                else if (buffer[0] == 27)
                     isEscapeCode = true;
                 else if (isEscapeCode == false)
                     return (char?)buffer[0];
             }
-        }
-
-        public string ReadLine()
-        {
-            StringBuilder builder = new StringBuilder();
-            char? temp;
-            while ((temp = ReadChar()) != 13)
-            {
-                if (temp > 31 && temp < 127)
-                {
-                    builder.Append(temp);
-                    stream.Write(new byte[1] { (byte)temp }, 0, 1);
-                }
-                else if (temp == 8)
-                {
-                    stream.Write(new byte[1] { 8 }, 0, 1);
-                    builder.Remove(builder.Length - 1, 1);
-                }
-            }
-            return builder.ToString();
         }
     }
 }

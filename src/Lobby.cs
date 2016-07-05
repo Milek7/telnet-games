@@ -57,6 +57,20 @@ namespace TelnetGames
                     PlayerHandoffRaise(typeof(Breakout), player);
                     break;
                 }
+                if (temp == '3')
+                {
+                    players.Remove(player);
+                    PlayerHandoffRaise(typeof(Tetris), player);
+                    break;
+                }
+				/*
+				if (temp == '4')
+				{
+					players.Remove(player);
+					PlayerHandoffRaise(typeof(Curve), player);
+					break;
+				}
+				*/
                 if (temp == 'E' || temp == 'e')
                 {
                     players.Remove(player);
@@ -125,14 +139,18 @@ namespace TelnetGames
                 player.vt.WriteText("Select game:");
                 player.vt.SetCursor(0, 6);
                 player.vt.WriteText("1: Pong (multiplayer)\r\n");
-                player.vt.WriteText("2: Breakout (WIP!)");
-                player.vt.SetCursor(0, 9);
+                player.vt.WriteText("2: Breakout\r\n");
+                player.vt.WriteText("3: Tetris\r\n");
+				//player.vt.WriteText("4: Curve (WIP!)");
+                player.vt.SetCursor(0, 10);
                 player.vt.WriteText("E - Exit, C - ");
                 if (player.supportAixtermColors)
                     player.vt.WriteText("Disable");
                 else
                     player.vt.WriteText("Enable");
                 player.vt.WriteText(" aixterm colors");
+				player.vt.WriteText("");
+				player.vt.WriteText("Should work on any VT100 compatibile terminal, but works best on PuTTY");
             }
             else
             {

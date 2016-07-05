@@ -11,7 +11,7 @@ namespace TelnetGames
     {
         public class PlayerClass
         {
-            public PlayerType playerType;
+			public PlayerType playerType;
             public VT100 vt;
             public bool supportAixtermColors;
         }

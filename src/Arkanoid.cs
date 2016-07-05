@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace TelnetGames
 {
-    class Breakout : Game
+    class Arkanoid : Game
     {
         private new class PlayerClass : Game.PlayerClass
         {
             public int points = 0;
-            public int lives = 3;
-            public int paddle = 0;
+            public int lives = 2;
+            public int paddle = 14;
             public ColorPalette colorPalette;
 
             private static readonly ColorPalette compatibilityColorPalette = new CompatibilityColorPalette();
@@ -95,10 +95,15 @@ namespace TelnetGames
         private enum GameState
         {
             Stopped,
-            Game
+            Intro,
+            Game,
+            Outro,
+            Highscore
         }
 
         private class PlayerRemovedException : ApplicationException { }
+
+        private static readonly string Texts = "\nTHE TIME AND ERA OF THIS STORY IS UNKNOWN.\nAFTER THE MOTHERSHIP \"ARKANOID\" WAS DESTROYED,\nA SPACECRAFT \"VAUS\" SCRAMBLED AWAY FROM IT.\nBUT ONLY TO BE TRAPPED IN SPACE WARPED BY SOMEONE........\x00\nDIMENSION-CONTROLLING FORT \"DOH\" HAS NOW BEEN DEMOLISHED,\nAND TIME STARTED FLOWING REVERSELY.\n\"VAUS\" MANAGED TO ESCAPE FROM THE DISTORTED SPACE.\nBUT THE REAL VOYAGE OF \"ARKANOID\" IN THE GALAXY HAS ONLY STARTED......\x00";
 
         private PlayerClass currentPlayer;
         private List<PlayerClass> players = new List<PlayerClass>();
@@ -108,38 +113,40 @@ namespace TelnetGames
         public override int PlayerCount { get { return (currentPlayer != null ? 1 : 0); } }
 
         private GameState gameState = GameState.Stopped;
-        private int ballX = 10;
-        private int ballY = 12;
-        private int ballXmov = 0;
-        private int ballYmov = 0;
-        private int paddleSize = 6;
-        private bool frame = false;
-        private int[,] bricks = new int[22, 13]
+        private int textPos = 0;
+        private int textY = 7;
+        private int ballX = 2;
+        private int ballY = 2;
+        private int ballXmov = 1;
+        private int ballYmov = 1;
+        private int[,] bricks = new int[,]
         {
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 1 ,1, 1},
-            {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 ,4, 4},
-            {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 ,4, 4},
-            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 ,3, 3},
-            {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 ,2, 2},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+            {6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0},
+            {0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0},
+            {0, 0, 1, 0, 3, 3, 3, 0, 1, 0, 0},
+            {0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0},
+            {6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6},
+            {0, 0, 0, 0, 8, 8, 8, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6}
         };
-        private int blocks = 65;
+
+        private StringBuilder input = new StringBuilder();
+        private StringBuilder name = new StringBuilder();
 
         public override void Tick()
         {
@@ -148,8 +155,60 @@ namespace TelnetGames
             try
             {
                 HandleInput();
-                ComputeLogic();
-                RenderFrame();
+                switch (gameState)
+                {
+                    case GameState.Intro:
+                    case GameState.Outro:
+                        char letter = Texts[textPos];
+                        if (letter == '\n')
+                        {
+                            currentPlayer.vt.SetCursor(3, textY);
+                            textY++;
+                        }
+                        if (letter == 0)
+                        {
+                            if (gameState == GameState.Intro)
+                                gameState = GameState.Game;
+                            if (gameState == GameState.Outro)
+                                gameState = GameState.Highscore;
+                            break;
+                        }
+                        currentPlayer.vt.WriteText(letter.ToString());
+                        textPos++;
+                        break;
+                    case GameState.Game:
+                        ComputeLogic();
+                        RenderFrame();
+                        break;
+                    case GameState.Highscore:
+                        if (input.Length != 0)
+                        {
+                            string s = input.ToString();
+                            foreach (char c in s)
+                            {
+                                if (c >= 65 && c <= 122 && name.Length < 10)
+                                {
+                                    name.Append(c);
+                                    currentPlayer.vt.WriteText(c.ToString());
+                                }
+                                if ((c == 8 || c == 127) && name.Length > 0)
+                                {
+                                    currentPlayer.vt.WriteText("\x08 \x08");
+                                    name.Remove(name.Length - 1, 1);
+                                }
+                                if (c == 13)
+                                {
+                                    gameState = GameState.Game;
+                                    currentPlayer.lives = 2;
+                                    if (name.Length == 0)
+                                        name.Append("ANONYM");
+                                    Console.WriteLine(name + ": " + currentPlayer.points);
+                                }
+                            }
+                        }
+                        currentPlayer.vt.WriteText("\x00");
+                        break;
+                }
                 Flush();
             }
             catch (PlayerRemovedException) { }
@@ -164,7 +223,6 @@ namespace TelnetGames
             currentPlayer.vt.SetBackgroundColor(currentPlayer.colorPalette.Background);
             currentPlayer.vt.SetForegroundColor(currentPlayer.colorPalette.Text);
             currentPlayer.vt.ClearScreen();
-            currentPlayer.paddle = 19 - (paddleSize / 2);
             Flush();
             gameState = GameState.Game;
         }
@@ -198,99 +256,50 @@ namespace TelnetGames
 
         private void ComputeLogic()
         {
-            if (currentPlayer.paddle < 0)
-                currentPlayer.paddle = 0;
+            if (currentPlayer.paddle < 1)
+                currentPlayer.paddle = 1;
             if (currentPlayer.paddle > 33)
                 currentPlayer.paddle = 33;
 
-            if (ballXmov == 0 && ballYmov == 0)
-            {
-                ballX = currentPlayer.paddle + (paddleSize / 2);
-                ballY = 21;
-            }
+            ballX += ballXmov;
+            ballY += ballYmov;
 
-            if (frame == true)
-            {
-                frame = false;
-                return;
-            }
-            else
-                frame = true;
-
-            if (ballX == 38 || ballX == 0)
+            if (ballX == 38 || ballX == 1)
             {
                 ballXmov = -ballXmov;
                 Bell();
             }
-            if (ballY == 0)
+            if (ballY == 1 || (ballY == 22 && ballX > currentPlayer.paddle - 1 && ballX < currentPlayer.paddle + 7))
             {
                 ballYmov = -ballYmov;
                 Bell();
             }
-            if (ballY == 22)
+            if (ballY == 23)
             {
                 BallLost();
             }
-
-            CheckCollisionPaddle(ballX, ballY + ballYmov, false, true);
-            CheckCollisionPaddle(ballX + ballXmov, ballY, true, false);
-            CheckCollisionPaddle(ballX + ballXmov, ballY + ballYmov, true, true);
-
-            CheckCollisionBrick(ballX / 3, ballY + ballYmov, false, true);
-            CheckCollisionBrick((ballX + ballXmov) / 3, ballY, true, false);
-            CheckCollisionBrick((ballX + ballXmov) / 3, ballY + ballYmov, true, true);
-            
-            ballX += ballXmov;
-            ballY += ballYmov;
-        }
-
-        private bool CheckCollisionBrick(int X, int Y, bool invertX, bool invertY)
-        {
-            if (X >= 0 && X <= 12 && Y >= 0 && Y <= 21)
-                if (bricks[Y, X] != 0)
-                {
-                    Bell();
-                    if (bricks[Y, X] > 8)
-                        bricks[Y, X]--;
-                    else if (bricks[Y, X] != 7)
-                    {
-                        bricks[Y, X] = 0;
-                        blocks--;
-                        if (blocks == 0)
-                            KillGame();
-                    }
-                    if (invertX)
-                        ballXmov = -ballXmov;
-                    if (invertY)
-                        ballYmov = -ballYmov;
-                    return true;
-                }
-            return false;
-        }
-
-        private bool CheckCollisionPaddle(int X, int Y, bool invertX, bool invertY)
-        {
-            if (X >= 0 && X <= 38 && Y >= 0 && Y <= 23)
-                if (X >= currentPlayer.paddle && X < currentPlayer.paddle + paddleSize && Y == 22)
-                {
-                    Bell();
-                    if (invertX)
-                        ballXmov = -ballXmov;
-                    if (invertY)
-                        ballYmov = -ballYmov;
-                    return true;
-                }
-            return false;
         }
 
         private void BallLost()
         {
-            ballXmov = 0;
-            ballYmov = 0;
+            ballX = 2;
+            ballY = 2;
+            ballXmov = 1;
+            ballYmov = 1;
+            currentPlayer.paddle = 14;
             currentPlayer.lives--;
             if (currentPlayer.lives < 0)
             {
-                currentPlayer.lives = 2;
+                gameState = GameState.Highscore;
+                name.Clear();
+                for (int i = players.Count - 1; i >= 0; i--)
+                {
+                    players[i].vt.SetBackgroundColor(players[i].colorPalette.Background);
+                    players[i].vt.ClearScreen();
+                    players[i].vt.SetForegroundColor(players[i].colorPalette.Text);
+                    players[i].vt.SetCursor(0, 0);
+                    players[i].vt.SetCursorVisiblity(true);
+                }
             }
             Bell();
             throw new PlayerRemovedException();
@@ -299,69 +308,65 @@ namespace TelnetGames
         private void RenderFrame(PlayerClass player)
         {
             player.vt.SetCursorVisiblity(false);
-            if (frame == false)
-            {
-                player.vt.SetBackgroundColor(player.colorPalette.Background);
-                player.vt.ClearLine();
-                player.vt.SetCursor(0, 24);
-                player.vt.SetBackgroundColor(player.colorPalette.Band);
-                player.vt.WriteText(" ");
-                player.vt.SetCursor(79, 24);
-                player.vt.WriteText(" ");
-                player.vt.SetBackgroundColor(player.colorPalette.Paddle);
-                player.vt.DrawLine(currentPlayer.paddle * 2 + 1, 24, VT100.Direction.Horizontal, paddleSize * 2);
-                return;
-            }
             player.vt.SetBackgroundColor(player.colorPalette.Background);
             player.vt.ClearScreen();
             for (int y = 0; y < 22; y++)
             {
-                for (int x = 0; x < 13; x++)
+                for (int x = 0; x < 11; x++)
                 {
                     if (bricks[y, x] != 0)
                     {
                         player.vt.SetBackgroundColor(player.colorPalette.Brick[(bricks[y, x] > 8 ? 8 : bricks[y, x]) - 1]);
-                        player.vt.DrawLine(x * 6 + 1, y + 1, VT100.Direction.Horizontal, 6);
+                        player.vt.DrawLine(x * 6 + 2, y + 1, VT100.Direction.Horizontal, 6);
                     }
                 }
             }
             player.vt.SetBackgroundColor(player.colorPalette.Band);
             player.vt.DrawLine(0, 0, VT100.Direction.Vertical, 24);
+            player.vt.DrawLine(1, 0, VT100.Direction.Vertical, 24);
+            player.vt.DrawLine(78, 0, VT100.Direction.Vertical, 24);
             player.vt.DrawLine(79, 0, VT100.Direction.Vertical, 24);
-            player.vt.DrawLine(1, 0, VT100.Direction.Horizontal, 79);
+            player.vt.DrawLine(2, 0, VT100.Direction.Horizontal, 78);
             player.vt.SetBackgroundColor(player.colorPalette.Ball);
-            player.vt.DrawLine(ballX * 2 + 1, ballY + 1, VT100.Direction.Horizontal, 2);
+            player.vt.DrawLine(ballX * 2, ballY, VT100.Direction.Horizontal, 2);
             player.vt.SetBackgroundColor(player.colorPalette.Paddle);
-            player.vt.DrawLine(currentPlayer.paddle * 2 + 1, 24, VT100.Direction.Horizontal, paddleSize * 2);
+            player.vt.DrawLine(currentPlayer.paddle * 2, 24, VT100.Direction.Horizontal, 12);
         }
 
         private void HandleInput(PlayerClass player)
         {
+            input.Clear();
             char? temp;
             while ((temp = player.vt.ReadChar()) != null)
             {
                 if (player.playerType == PlayerType.Player)
                 {
-                    if (temp == 'Z' || temp == 'z')
-                        player.paddle--;
-                    if (temp == 'X' || temp == 'x')
-                        player.paddle++;
-                    if (temp == 'A' || temp == 'a')
-                        if (ballXmov == 0 && ballYmov == 0)
+                    if (gameState != GameState.Highscore)
+                    {
+                        if (temp == 'Z' || temp == 'z')
+                            player.paddle--;
+                        if (temp == 'X' || temp == 'x')
+                            player.paddle++;
+                        if (temp == ' ')
                         {
-                            ballXmov = 1;
-                            ballYmov = 1;
+                            if (gameState == GameState.Intro)
+                                gameState = GameState.Game;
+                            if (gameState == GameState.Outro)
+                                gameState = GameState.Highscore;
                         }
-                    if (temp == 'C' || temp == 'c')
-                    {
-                        player.supportAixtermColors = !player.supportAixtermColors;
-                        player.UpdatePalette();
+                        if (temp == 'C' || temp == 'c')
+                        {
+                            player.supportAixtermColors = !player.supportAixtermColors;
+                            player.UpdatePalette();
+                        }
+                        if (temp == 'E' || temp == 'e')
+                        {
+                            RemovePlayer(player);
+                            throw new PlayerRemovedException();
+                        }
                     }
-                    if (temp == 'E' || temp == 'e')
-                    {
-                        RemovePlayer(player);
-                        throw new PlayerRemovedException();
-                    }
+                    else
+                        input.Append(temp);
                 }
                 else if (temp == 'E' || temp == 'e')
                 {

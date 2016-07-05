@@ -1,3 +1,5 @@
 compile-visualstudio/TelnetGames/bin/
 compile-visualstudio/TelnetGames/obj/
+compile-visualstudio/TelnetGames.userprefs
+compile-visualstudio/packages/
 compile-visualstudio/*.suo
