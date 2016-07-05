@@ -155,6 +155,7 @@ namespace TelnetGames
                 player.vt.WriteText(" aixterm colors");
 				player.vt.WriteText("");
 				player.vt.WriteText("Should work on any VT100 compatibile terminal, but works best on PuTTY");
+				player.vt.WriteText("Source: https://github.com/Milek7/telnet-games");
             }
             else
             {
