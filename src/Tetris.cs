@@ -315,7 +315,7 @@ namespace TelnetGames
                         string s = input.ToString();
                         foreach (char c in s)
                         {
-                            if (c >= 65 && c <= 122 && name.Length < 10)
+                            if (c >= 48 && c <= 122 && name.Length < 10)
                             {
                                 name.Append(c);
                                 currentPlayer.vt.WriteText(c.ToString());
@@ -341,11 +341,6 @@ namespace TelnetGames
             }
             catch (PlayerRemovedException) { }
         }
-
-        static private int Compare(KeyValuePair<string, int[]> a, KeyValuePair<string, int[]> b)
-        {
-            return b.Key[1].CompareTo(a.Key[1]);
-        }
         
         private void SaveHighscore(KeyValuePair<string, int[]> highscore)
         {
@@ -354,7 +349,7 @@ namespace TelnetGames
             List<KeyValuePair<string, int[]>> table = JsonConvert.DeserializeObject<List<KeyValuePair<string, int[]>>>(reader.ReadToEnd());
             reader.Close();
             table.Add(highscore);
-            table.Sort(Compare);
+			table.Sort((y, x) => x.Key[1].CompareTo(y.Key[1]));
             FileStream fileW = new FileStream("tetris-highscores", FileMode.Create);
             StreamWriter writer = new StreamWriter(fileW);
             writer.Write(JsonConvert.SerializeObject(table));
@@ -606,19 +601,19 @@ namespace TelnetGames
                 {
                     if (gameState != GameState.Highscore)
                     {
-                        if ((temp == 'Z' || temp == 'z') && block != null)
+                        if ((temp == 'A' || temp == 'a') && block != null)
                         {
                             blockX--;
                             if (CheckCollision())
                                 blockX++;
                         }
-                        if ((temp == 'X' || temp == 'x') && block != null)
+                        if ((temp == 'D' || temp == 'd') && block != null)
                         {
                             blockX++;
                             if (CheckCollision())
                                 blockX--;
                         }
-                        if ((temp == 'A' || temp == 'a' || temp == 'N' || temp == 'n') && block != null)
+                        if ((temp == 'W' || temp == 'w') && block != null)
                         {
                             blockRotation++;
                             if (blockRotation > blocks[(int)block].Length - 1)
@@ -628,7 +623,7 @@ namespace TelnetGames
                             if (blockRotation == -1)
                                 blockRotation = blocks[(int)block].Length - 1;
                         }
-                        if ((temp == 'S' || temp == 's' || temp == 'M' || temp == 'm') && block != null)
+                        if ((temp == 'S' || temp == 's') && block != null)
                         {
                             while (LineDown()) ;
                         }

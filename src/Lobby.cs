@@ -142,9 +142,9 @@ namespace TelnetGames
                 player.vt.SetCursor(0, 5);
                 player.vt.WriteText("Select game:");
                 player.vt.SetCursor(0, 6);
-                player.vt.WriteText("1: Pong (multiplayer)\r\n");
-                player.vt.WriteText("2: Breakout\r\n");
-                player.vt.WriteText("3: Tetris\r\n");
+				player.vt.WriteText("1: Pong (multiplayer) (controls: move: A, Z)\r\n");
+				player.vt.WriteText("2: Breakout (controls: move: Z, X; start: A)\r\n");
+				player.vt.WriteText("3: Tetris (controls: move: A, D; rotate: W; drop: S)\r\n");
 				//player.vt.WriteText("4: Curve (WIP!)");
                 player.vt.SetCursor(0, 10);
                 player.vt.WriteText("E - Exit, C - ");
@@ -153,9 +153,9 @@ namespace TelnetGames
                 else
                     player.vt.WriteText("Enable");
                 player.vt.WriteText(" aixterm colors");
-				player.vt.WriteText("");
-				player.vt.WriteText("Should work on any VT100 compatibile terminal, but works best on PuTTY");
-				player.vt.WriteText("Source: https://github.com/Milek7/telnet-games");
+				player.vt.WriteText("\r\n");
+				player.vt.WriteText("Should work on any VT100 compatibile terminal, but works best on PuTTY\r\n");
+				player.vt.WriteText("Source: https://github.com/Milek7/telnet-games\r\n");
             }
             else
             {

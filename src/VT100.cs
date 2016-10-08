@@ -98,18 +98,18 @@ namespace TelnetGames
 
         public void DrawLine(int x, int y, Direction direction, int length)
         {
-            SetCursor(x, y);
             if (direction == Direction.Horizontal)
             {
+				SetCursor(x, y);
                 for (int i = 0; i < length; i++)
                     stream.Write(new byte[1] { 32 }, 0, 1);
             }
             if (direction == Direction.Vertical)
             {
-                for (int i = 1; i <= length; i++)
+                for (int i = 0; i < length; i++)
                 {
-                    stream.Write(new byte[2] { 32, 8 }, 0, 2);
-                    CursorDown();
+					SetCursor (x, y + i);
+                    stream.Write(new byte[1] { 32 }, 0, 1);
                 }
             }
         }
@@ -159,6 +159,12 @@ namespace TelnetGames
                 buffer[5] = 108;
             stream.Write(buffer, 0, buffer.Length);
         }
+
+		public void Reset()
+		{
+			byte[] buffer = new byte[2] { 27, 99 };
+			stream.Write (buffer, 0, buffer.Length);
+		}
 
         public void Bell()
         {

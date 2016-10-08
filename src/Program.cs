@@ -44,9 +44,10 @@ namespace TelnetGames
             GameThread = new Thread(new ThreadStart(GameThreadMethod));
             GameThread.Start();
 
-            IPAddress ipAddress = IPAddress.Any;
-            IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, 3000);
+			IPAddress ipAddress = IPAddress.IPv6Any;
+            IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, 2333);
             TcpListener listener = new TcpListener(ipEndPoint);
+			listener.Server.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, false);
             listener.Start();
             while (true)
             {
@@ -146,11 +147,8 @@ namespace TelnetGames
                 if (game.GetType() == typeof(Lobby))
                 {
                     Console.WriteLine("Client disconnected. (leaved)");
-                    player.vt.SetBackgroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.Black });
-                    player.vt.SetForegroundColor(new VT100.ColorClass { Bright = false, Color = VT100.ColorEnum.White });
                     player.vt.ClearScreen();
-                    player.vt.SetCursor(0, 0);
-                    player.vt.WriteText("Goodbye.\r\n");
+					player.vt.Reset();
                     player.vt.Flush();
                     player.vt.Close();
                 }
