@@ -45,7 +45,7 @@ namespace TelnetGames
             GameThread.Start();
 
 			IPAddress ipAddress = IPAddress.IPv6Any;
-            IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, 2333);
+            IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, 23);
             TcpListener listener = new TcpListener(ipEndPoint);
 			listener.Server.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, false);
             listener.Start();

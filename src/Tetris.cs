@@ -349,7 +349,7 @@ namespace TelnetGames
             List<KeyValuePair<string, int[]>> table = JsonConvert.DeserializeObject<List<KeyValuePair<string, int[]>>>(reader.ReadToEnd());
             reader.Close();
             table.Add(highscore);
-			table.Sort((y, x) => x.Key[1].CompareTo(y.Key[1]));
+			table.Sort((y, x) => x.Value[1].CompareTo(y.Value[1]));
             FileStream fileW = new FileStream("tetris-highscores", FileMode.Create);
             StreamWriter writer = new StreamWriter(fileW);
             writer.Write(JsonConvert.SerializeObject(table));
